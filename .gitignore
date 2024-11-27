@@ -2,3 +2,4 @@ src/cmu_graphics
 src/datahub.geojson
 src/geojson-maps.json
 .venv
+src/cmu_graphics
