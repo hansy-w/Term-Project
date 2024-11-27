@@ -251,7 +251,8 @@ def find_nearest_country(mouse_x, mouse_y, country_shapes, app):
 
 country_codes = set(filtered_world_data['adm0_a3'])
 def get_country_neighbors():
-    response = requests.get("https://restcountries.com/v3.1/all")
+    response = requests.get("https://restcountries.com/v3.1/all?fields=cca3,borders")
+
     response.raise_for_status()
     
     countries_data = response.json()
