@@ -251,7 +251,7 @@ def find_nearest_country(mouse_x, mouse_y, country_shapes, app):
 
 country_codes = set(filtered_world_data['adm0_a3'])
 def get_country_neighbors():
-    response = requests.get("https://restcountries.com/v3.1/all?fields=cca3,borders")
+    response = requests.get("https://restcountries.com/v3.1/all")
     response.raise_for_status()
     
     countries_data = response.json()
@@ -329,6 +329,61 @@ def get_center(name_polygons):
 
 ###########################################################################################
 #Helper Functions for MVC
+def rollDie():
+    return random.randint(1, 6)
+
+def rollBlitz(attacker, defender):
+
+    attacker_rolls = sorted([rollDie() for dice in range(min(attacker, 3))], reverse=True)
+    defender_rolls = sorted([rollDie() for dice in range(min(defender, 2))], reverse=True)
+
+    attacker_wins = 0
+    defender_wins = 0
+
+    for i in range(len(defender_rolls)):
+        if attacker_rolls[i] > defender_rolls[i]:
+            attacker_wins += 1
+        else:
+            defender_wins += 1
+
+    return attacker_wins, defender_wins
+
+# Simulate rounds until attack is successful or attacker runs out of troops
+def blitz(attacker, defender):
+    attacker_losses = 0
+    defender_losses = 0
+
+    while attacker > 1 and defender > 0:  # basic requirements for attacking
+        attacker_wins, defender_wins = rollBlitz(attacker, defender)
+
+        #  defender loses one troop for each of the attacker's wins
+        defender_losses += defender_wins
+        attacker_losses += attacker_wins
+
+        attacker -= attacker_losses
+        defender -= defender_losses
+
+        print(f"Attacker: {attacker} troops remaining, Defender: {defender} troops remaining.")
+
+    return attacker_losses, defender_losses
+
+def monteCarloBlitzSimulation(attacker_initial, defender_initial, simulations=10000):
+    attacker_wins_total = 0
+    defender_wins_total = 0
+    
+    for _ in range(simulations):
+        attacker_losses, defender_losses = blitz(attacker_initial, defender_initial)
+        
+        if defender_losses >= defender_initial:
+            attacker_wins_total += 1
+        else:
+            defender_wins_total += 1
+
+    attacker_win_prob = pythonRound(attacker_wins_total / simulations,3)
+    defender_win_prob = pythonRound(defender_wins_total / simulations,3)
+    
+    return attacker_win_prob
+
 def withinSubregion(app,mouseX,mouseY):
     app.subregionsIn=[]
     for subregion, (leftTop, rightBot) in subregion_boxes_dict.items():
@@ -361,6 +416,8 @@ def withinCountryinSub(app, mouseX, mouseY):
                 if leftX <= mouseX <= rightX and leftY <= mouseY <= rightY:
                     app.countriesIn.append(country_name)
 
+def distance(x0,y0,x1,y1):
+    return ((x1-x0)**2+(y1-y0)**2)**0.5
 
 def get_random_half_countries(country_shapes):
     country_list = list(country_shapes.keys())
@@ -374,11 +431,11 @@ class Player:
 
     def __init__(self,startingCountries,color):
         self.active=False
-        self.owned= {key: 2 for key in startingCountries}
+        self.owned= {key: 1 for key in startingCountries}
         self.color=color
         self.phases=['Reinforcement','Attack','Fortification']
         self.phaseIndex=0
-        self.gamePhase=[]
+        self.gamePhase=self.phases[self.phaseIndex]
     
     def __repr__(self):
         return "Hans"
@@ -401,7 +458,7 @@ class Game:
         
         starting1 = set(get_random_half_countries(country_shapes))
 
-        starting2 = set(country_shapes.keys()) - starting1
+        starting2 = set(country_shapes.keys()).difference(starting1)
 
         app.player1 = Player(starting1,'lightgreen')
 
@@ -427,12 +484,23 @@ def onAppStart(app):
     app.countriesIn = []
     app.neighbors= []
     app.tView=False
+    app.probability=""
+    app.message=''
+
+    
+    app.attackCountry=None
+    app.defendCountry=None
+    app.draggingLine = False
+    app.lineStartLocation = None
+    app.lineEndLocation = None
 
     app.activeGame=Game(app)
 
     app.activeGame.start(app)
 
     app.activePlayer=app.players[0]
+
+
 
 
 
@@ -466,7 +534,7 @@ def drawCountries(app):
             else:       
                 if country_name==app.nearest_country:
                     color='dimGray'
-                elif country_name_to_code[country_name] in app.neighbors:
+                elif country_name_to_code[country_name] in app.neighbors and country_name not in app.activePlayer.owned and app.activePlayer.phases[app.activePlayer.phaseIndex]=='Attack':
                     color='red'
                 else:
                     if country_name in app.player1.owned:
@@ -496,14 +564,58 @@ def drawCountries(app):
 def onKeyPress(app,key):
     if key=='t':
         app.tView=not app.tView
+
+    if key=='space':        
+        if app.activePlayer.phaseIndex==2:
+            app.activePlayer.phaseIndex=0
+        else:
+            app.activePlayer.phaseIndex+=1
+        
+def onMouseDrag(app, mouseX, mouseY):
+     if app.activePlayer.phases[app.activePlayer.phaseIndex]=='Attack':
+        app.draggingline = True
+        app.lineEndLocation = (mouseX, mouseY)
+        withinSubregion(app,mouseX,mouseY)
+        withinCountryinSub(app,mouseX,mouseY)
+        app.defendCountry = find_nearest_country(mouseX, mouseY, country_shapes, app)
+
+        
+        
+def onMouseRelease(app, mouseX, mouseY):
+    app.draggingline = False
+
+    withinSubregion(app,mouseX,mouseY)
+    withinCountryinSub(app,mouseX,mouseY)
+    app.defendCountry = find_nearest_country(mouseX, mouseY, country_shapes, app)
+
+    if country_name_to_code[app.defendCountry] not in get_neighbors(country_name_to_code[app.attackCountry]):
+        app.defendCountry=None
+        return None
+    
+    for player in app.activeGame.players:
+            if app.defendCountry in player.owned:
+                defendPlayer=player
+                break
+    
+
+    if app.attackCountry in app.activePlayer.owned and app.defendCountry not in app.activePlayer.owned:
+        app.probability=monteCarloBlitzSimulation(app.activePlayer.owned[app.attackCountry],defendPlayer.owned[app.defendCountry])
+    else:
+        app.probability='not valid attack'
     
 
 def onMousePress(app,mouseX,mouseY):
     app.nearest_country = find_nearest_country(mouseX, mouseY, country_shapes, app)
+    
+    if app.activePlayer.phases[app.activePlayer.phaseIndex]=='Reinforcement':
 
-    for player in app.activeGame.players:
-        if app.nearest_country in player.owned:
-            player.owned[app.nearest_country]+=1
+        for player in app.activeGame.players:
+            if app.nearest_country in player.owned:
+                player.owned[app.nearest_country]+=1
+
+    elif app.activePlayer.phases[app.activePlayer.phaseIndex]=='Attack':
+        app.lineStartLocation=mouseX,mouseY
+        app.attackCountry=app.nearest_country
 
 
 
@@ -512,16 +624,42 @@ def redrawAll(app):
 
     drawPhaseUI(app)
 
+    if app.activePlayer.phases[app.activePlayer.phaseIndex]=='Attack':
+        drawAttack(app)
+
     drawRect(0,app.UIy,app.width,app.height-app.UIy,fill='linen')
     drawLabel(f"Country: {country_name_to_code[app.nearest_country]}",650,600,size=25)
     drawLabel(f"Population: {app.population}",650,625,size=25)
     drawLabel(f"Neighbor(s): {app.neighbors}",650,650,size=25)
     drawLabel(f"In Countries: {app.countriesIn}",650,675,size=25)
 
+
+def drawAttack(app):
+
+    
+
+    if app.lineStartLocation != None and app.lineEndLocation != None:
+        drawLabel(f'Attacking Country: {app.attackCountry}',
+                  800, 320, size=16, bold=True, fill=app.activePlayer.color)
+        drawLabel(f'Defending Country: {app.defendCountry}',
+                  800, 360, size=16, bold=True, fill=app.activePlayer.color)
+        
+        x0, y0 = app.lineStartLocation
+        x1, y1 = app.lineEndLocation
+        
+        if distance(x0, y0,x1, y1)>=10 and app.defendCountry!=None:
+            drawLine(x0, y0, x1, y1, fill='black', lineWidth=3, dashes=app.draggingline,arrowEnd=True)
+        
+
 def drawPhaseUI(app):
     drawLabel(f"Current Player: {app.activePlayer}",
           800, 400, size=16, bold=True, fill=app.activePlayer.color)
-    
+    drawLabel(f"Current Phase: {app.activePlayer.phases[app.activePlayer.phaseIndex]}",
+          800, 440, size=16, bold=True, fill=app.activePlayer.color)
+    drawLabel(f"Attacker win probability: {app.probability}",
+          800, 480, size=16, bold=True, fill=app.activePlayer.color)
+    drawLabel(f"{app.message}",
+          800, 480, size=16, bold=True, fill='black')
 
 
 def onMouseMove(app, mouseX, mouseY):
@@ -535,5 +673,3 @@ def onMouseMove(app, mouseX, mouseY):
 app.setMaxShapeCount(4000)
 
 runApp()
-
-
