@@ -3,3 +3,5 @@ src/datahub.geojson
 src/geojson-maps.json
 .venv
 src/cmu_graphics
+.DS_Store
+src/.DS_Store
