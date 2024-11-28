@@ -573,16 +573,18 @@ def onKeyPress(app,key):
             app.activePlayer.phaseIndex+=1
         
 def onMouseDrag(app, mouseX, mouseY):
-     if app.activePlayer.phases[app.activePlayer.phaseIndex]=='Attack':
-        app.draggingline = True
-        app.lineEndLocation = (mouseX, mouseY)
-        withinSubregion(app,mouseX,mouseY)
-        withinCountryinSub(app,mouseX,mouseY)
-        app.defendCountry = find_nearest_country(mouseX, mouseY, country_shapes, app)
+     if mouseY<app.UIy:
+        if app.activePlayer.phases[app.activePlayer.phaseIndex]=='Attack':
+            app.draggingline = True
+            app.lineEndLocation = (mouseX, mouseY)
+            withinSubregion(app,mouseX,mouseY)
+            withinCountryinSub(app,mouseX,mouseY)
+            app.defendCountry = find_nearest_country(mouseX, mouseY, country_shapes, app)
 
         
         
 def onMouseRelease(app, mouseX, mouseY):
+    
     app.draggingline = False
 
     withinSubregion(app,mouseX,mouseY)
@@ -602,21 +604,23 @@ def onMouseRelease(app, mouseX, mouseY):
     if app.attackCountry in app.activePlayer.owned and app.defendCountry not in app.activePlayer.owned:
         app.probability=monteCarloBlitzSimulation(app.activePlayer.owned[app.attackCountry],defendPlayer.owned[app.defendCountry])
     else:
-        app.probability='not valid attack'
+        app.probability='N/A'
+        app.message='not valid attack'
     
 
 def onMousePress(app,mouseX,mouseY):
     app.nearest_country = find_nearest_country(mouseX, mouseY, country_shapes, app)
     
-    if app.activePlayer.phases[app.activePlayer.phaseIndex]=='Reinforcement':
+    if mouseY<app.UIy:
+        if app.activePlayer.phases[app.activePlayer.phaseIndex]=='Reinforcement':
 
-        for player in app.activeGame.players:
-            if app.nearest_country in player.owned:
-                player.owned[app.nearest_country]+=1
+            for player in app.activeGame.players:
+                if app.nearest_country in player.owned:
+                    player.owned[app.nearest_country]+=1
 
-    elif app.activePlayer.phases[app.activePlayer.phaseIndex]=='Attack':
-        app.lineStartLocation=mouseX,mouseY
-        app.attackCountry=app.nearest_country
+        elif app.activePlayer.phases[app.activePlayer.phaseIndex]=='Attack':
+            app.lineStartLocation=mouseX,mouseY
+            app.attackCountry=app.nearest_country
 
 
 
@@ -628,7 +632,11 @@ def redrawAll(app):
     if app.activePlayer.phases[app.activePlayer.phaseIndex]=='Attack':
         drawAttack(app)
 
+    drawUI(app)
+
+def drawUI(app):
     drawRect(0,app.UIy,app.width,app.height-app.UIy,fill='linen')
+
     drawLabel(f"Country: {country_name_to_code[app.nearest_country]}",650,600,size=25)
     drawLabel(f"Population: {app.population}",650,625,size=25)
     drawLabel(f"Neighbor(s): {app.neighbors}",650,650,size=25)
@@ -660,7 +668,7 @@ def drawPhaseUI(app):
     drawLabel(f"Attacker win probability: {app.probability}",
           800, 480, size=16, bold=True, fill=app.activePlayer.color)
     drawLabel(f"{app.message}",
-          800, 480, size=16, bold=True, fill='black')
+          800, 520, size=16, bold=True, fill='black')
 
 
 def onMouseMove(app, mouseX, mouseY):
