@@ -501,7 +501,7 @@ def onAppStart(app):
     app.probability=""
     app.message=''
 
-    
+
     app.attackCountry=None
     app.defendCountry=None
     app.draggingLine = False
