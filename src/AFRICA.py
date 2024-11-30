@@ -295,6 +295,33 @@ for _, row in filtered_world_data.iterrows():
     country_name_to_code[country_name]=country_code
 
 
+def pathSolver(startCountry, endCountry, playerOwned, visited=None):
+    print('pathSolver is Running~!!!')
+
+    if visited is None:
+        visited = set()
+
+    # Base case: If start and end are the same country, return the path
+    if startCountry == endCountry:
+        return [startCountry]
+
+    visited.add(startCountry)
+
+    # Iterate through countries
+    for neighbor in country_neighbors.get(startCountry, []):
+        print('pathSolver is Running~!!!')
+        # ifLegal: Only consider neighbors owned by the same player and not yet visited
+        if neighbor in playerOwned and neighbor not in visited:
+            
+
+
+            path = pathSolver(neighbor, endCountry, playerOwned, visited)
+            if path!=None: 
+                return [startCountry] + path
+
+    # If no valid path is found, return False
+    return False
+
 territories={1: ['EGY', 'LBY', 'TUN', 'DZA', 'MAR', 'SDN'],  # North Africa
     2: ['CIV', 'BEN', 'TGO', 'GHA', 'SEN', 'NGA', 'GMB', 'MLI', 'BFA', 'NER', 'GNB', 'GHA', 'MRT'],  # West Africa
     3: ['CAM', 'GAB', 'CAF', 'COD','GAB', 'COG','CMR'],  # Central Africa
@@ -515,7 +542,8 @@ def onAppStart(app):
     app.lineEndLocation = None
 
     app.fortStart=None
-    app.fortStartCenter=None
+    app.fortEnd=None
+    app.fortPath=None
 
 
     app.activeGame=Game(app)
@@ -592,6 +620,8 @@ def drawCountries(app):
                 drawCircle(x,y,10,fill="aqua")
                 drawLabel(f'{app.player2.owned[country_name]}',x,y,size=18,bold=True)
 
+
+
 def onKeyPress(app,key):
     if key=='t':
         app.tView=not app.tView
@@ -601,7 +631,19 @@ def onKeyPress(app,key):
             app.activePlayer.phaseIndex=0
         else:
             app.activePlayer.phaseIndex+=1
-        
+
+def pathFinder(app,startCountry, endCountry):
+    
+    if startCountry and endCountry in app.activePlayer.owned:
+        countryPath=pathSolver(startCountry, endCountry,app.activePlayer)
+        if countryPath==False:
+            app.message='No Valid Paths to Fortification' 
+        else:
+            coordPath=[]
+            for country in countryPath:
+                coordPath.append(get_center(country_shapes[country]))
+            return coordPath
+            
 def onMouseDrag(app, mouseX, mouseY):
      if mouseY<app.UIy:
         if app.activePlayer.phases[app.activePlayer.phaseIndex]=='Attack':
@@ -611,33 +653,44 @@ def onMouseDrag(app, mouseX, mouseY):
             withinCountryinSub(app,mouseX,mouseY)
             app.defendCountry = find_nearest_country(mouseX, mouseY, country_shapes, app)
 
+        elif app.activePlayer.phases[app.activePlayer.phaseIndex]=='Fortification':
+            app.fortEnd = find_nearest_country(mouseX, mouseY, country_shapes, app)
+            app.fortPath = pathFinder(app,app.fortStart,app.fortEnd)
+            print(app.fortStart,app.fortEnd)
+            print(app.fortPath)
+            
+
+            
         
         
 def onMouseRelease(app, mouseX, mouseY):
     
     app.draggingline = False
-
     withinSubregion(app,mouseX,mouseY)
     withinCountryinSub(app,mouseX,mouseY)
 
     
-    app.defendCountry = find_nearest_country(mouseX, mouseY, country_shapes, app)
+    if app.activePlayer.phases[app.activePlayer.phaseIndex]=='Attack':
+        app.defendCountry = find_nearest_country(mouseX, mouseY, country_shapes, app)
 
-    if country_name_to_code[app.defendCountry] not in get_neighbors(country_name_to_code[app.attackCountry]):        
-        app.defendCountry=None 
-        return None
-    
-    for player in app.activeGame.players:
-            if app.defendCountry in player.owned:
-                defendPlayer=player
-                break
-    
+        if country_name_to_code[app.defendCountry] not in get_neighbors(country_name_to_code[app.attackCountry]):        
+            app.defendCountry=None 
+            return None
+        
+        for player in app.activeGame.players:
+                if app.defendCountry in player.owned:
+                    defendPlayer=player
+                    break
+        
 
-    if app.attackCountry in app.activePlayer.owned and app.defendCountry not in app.activePlayer.owned:
-        app.probability=monteCarloBlitzSimulation(app.activePlayer.owned[app.attackCountry],defendPlayer.owned[app.defendCountry])
-    else:
-        app.probability='N/A'
-        app.message='not valid attack'
+        if app.attackCountry in app.activePlayer.owned and app.defendCountry not in app.activePlayer.owned:
+            app.probability=monteCarloBlitzSimulation(app.activePlayer.owned[app.attackCountry],defendPlayer.owned[app.defendCountry])
+        else:
+            app.probability='N/A'
+            app.message='not valid attack'
+        
+    elif app.activePlayer.phases[app.activePlayer.phaseIndex]=='Reinforcement':
+        app.fortEnd=find_nearest_country(mouseX, mouseY, country_shapes, app)
     
 
 def onMousePress(app,mouseX,mouseY):
@@ -654,9 +707,11 @@ def onMousePress(app,mouseX,mouseY):
             app.lineStartLocation=mouseX,mouseY
             app.attackCountry=app.nearest_country
         
-        elif app.activePlayer.phases[app.activePlayer.phaseIndex]=='Fortify':
+        elif app.activePlayer.phases[app.activePlayer.phaseIndex]=='Fortification':
             app.fortStart=app.nearest_country
-            app.fortStartCenter=get_center(app.fortStart)
+            
+        
+
 
 
 
@@ -669,6 +724,9 @@ def redrawAll(app):
 
     if app.activePlayer.phases[app.activePlayer.phaseIndex]=='Attack':
         drawAttack(app)
+    
+    elif app.activePlayer.phases[app.activePlayer.phaseIndex]=='Fortification':
+        drawFortify(app)
 
     drawUI(app)
 
@@ -727,6 +785,19 @@ def drawAttack(app):
         if distance(x0, y0,x1, y1)>=10 and app.defendCountry!=None:
             drawLine(x0, y0, x1, y1, fill='black', lineWidth=3, dashes=app.draggingline,arrowEnd=True)
         
+def drawFortify(app):
+    print(app.fortPath)
+    if app.fortPath:
+        for i in range(len(app.fortPath) - 1):
+            x1, y1 = app.fortPath[i]
+            x2, y2 = app.fortPath[i + 1]
+            drawLine(x1, y1, x2, y2, lineWidth=2, fill='black',dashes=True)
+        
+        drawLabel(f'Fortify Start: {app.fortStart}',
+                  800, 280, size=16, bold=True, fill=app.activePlayer.color)
+        drawLabel(f'Fortify End: {app.fortEnd}',
+                  800, 320, size=16, bold=True, fill=app.activePlayer.color)
+
 
 def drawPhaseUI(app):
     drawRect(600,250,400,275,fill='black',opacity=30)
