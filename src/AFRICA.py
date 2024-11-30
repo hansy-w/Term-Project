@@ -11,8 +11,12 @@ import json
 import requests
 import random
 import numpy as np
+import os
+from PIL import Image
 ###########################################################################################
 # Json File Reading
+
+
 with open('./src/geojson-maps.json', 'r') as f:
     json_data = json.load(f)
 
@@ -607,6 +611,8 @@ def onMouseRelease(app, mouseX, mouseY):
 
     withinSubregion(app,mouseX,mouseY)
     withinCountryinSub(app,mouseX,mouseY)
+
+    
     app.defendCountry = find_nearest_country(mouseX, mouseY, country_shapes, app)
 
     if country_name_to_code[app.defendCountry] not in get_neighbors(country_name_to_code[app.attackCountry]):        
@@ -654,12 +660,23 @@ def redrawAll(app):
 
 def drawUI(app):
     drawRect(0,app.UIy,app.width,app.height-app.UIy,fill='linen')
+
+    drawImages(app)
+
     drawRect(50,600,100,100,fill='red') #Attack Button 
 
     drawLabel(f"Country: {country_name_to_code[app.nearest_country]}",650,600,size=25)
     drawLabel(f"Population: {app.population}",650,625,size=25)
     drawLabel(f"Neighbor(s): {app.neighbors}",650,650,size=25)
     drawLabel(f"In Countries: {app.countriesIn}",650,675,size=25)
+
+def CMU_imaging(file_path):
+    return CMUImage(Image.open(file_path))
+
+def drawImages(app):
+    mapUI=CMU_imaging('Images/mapUI.png')
+    drawImage(mapUI, 0, app.UIy)
+
 
 
 def drawAttack(app):
