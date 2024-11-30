@@ -454,9 +454,10 @@ class Player:
         self.phases=['Reinforcement','Attack','Fortification']
         self.phaseIndex=0
         self.gamePhase=self.phases[self.phaseIndex]
+        self.name="Hans"
     
     def __repr__(self):
-        return "Hans"
+        return f"{self.name}"
     
     def drawArmies(self):
         for country in self.owned:
@@ -493,6 +494,7 @@ class Game:
 #Actual App Functions for MVC
 
 def onAppStart(app):
+    app.background='mediumBlue'
     app.width=1200
     app.height=800
     app.UIy=550
@@ -511,6 +513,9 @@ def onAppStart(app):
     app.draggingLine = False
     app.lineStartLocation = None
     app.lineEndLocation = None
+
+    app.fortStart=None
+    app.fortStartCenter=None
 
 
     app.activeGame=Game(app)
@@ -551,12 +556,9 @@ def drawCountries(app):
 
 
             else:       
-                if country_name==app.nearest_country:
-                    color='dimGray'
-                
-                elif (country_name_to_code[country_name] in app.neighbors 
+                if (country_name_to_code[country_name] in app.neighbors 
                       and app.nearest_country in app.activePlayer.owned 
-                      and country_name in app.activePlayer.owned 
+                      and country_name not in app.activePlayer.owned 
                       and app.activePlayer.phases[app.activePlayer.phaseIndex]=='Attack'):
                     color='red'
                 else:
@@ -565,9 +567,15 @@ def drawCountries(app):
                     
                     elif country_name in app.player2.owned:
                         color=app.player2.color
+                
+                
             
             drawPolygon(*L,fill=color, border='Black', borderWidth=1,
                 opacity=100, rotateAngle=0, dashes=False, visible=True)
+
+            if country_name==app.nearest_country:
+                    drawPolygon(*L,fill='black', border=None, borderWidth=1,
+                opacity=60, rotateAngle=0, dashes=False, visible=True)
         
         
     
@@ -645,10 +653,16 @@ def onMousePress(app,mouseX,mouseY):
         elif app.activePlayer.phases[app.activePlayer.phaseIndex]=='Attack':
             app.lineStartLocation=mouseX,mouseY
             app.attackCountry=app.nearest_country
+        
+        elif app.activePlayer.phases[app.activePlayer.phaseIndex]=='Fortify':
+            app.fortStart=app.nearest_country
+            app.fortStartCenter=get_center(app.fortStart)
+
 
 
 
 def redrawAll(app):
+    
     drawCountries(app)
 
     drawPhaseUI(app)
@@ -659,42 +673,53 @@ def redrawAll(app):
     drawUI(app)
 
 def drawUI(app):
-    drawRect(0,app.UIy,app.width,app.height-app.UIy,fill='linen')
+    # drawRect(0,app.UIy,app.width,app.height-app.UIy,fill='linen')
 
     drawImages(app)
+    drawPlayers(app)
 
-    drawRect(50,600,100,100,fill='red') #Attack Button 
+    drawRect(50,600,100,100,fill='gray') #Attack Button 
 
+    
     drawLabel(f"Country: {country_name_to_code[app.nearest_country]}",650,600,size=25)
     drawLabel(f"Population: {app.population}",650,625,size=25)
     drawLabel(f"Neighbor(s): {app.neighbors}",650,650,size=25)
     drawLabel(f"In Countries: {app.countriesIn}",650,675,size=25)
 
 def CMU_imaging(file_path):
-    
     image=Image.open(file_path)
+    imageWidth, imageHeight = image.size
 
-    if file_path=='Images/mapUI.png':
-        image.resize((rounded(imageWidth*1.8), rounded(imageHeight*0.90))) 
     
-    else:
-        return CMUImage(image)
+
+    
+    return CMUImage(image)
+
+def drawPlayers(app):
+    x=1100
+    y=80
+    for player in app.players:
+
+        drawRect(x,y-50,200,100,fill='black',opacity=50,border=player.color)
+
+        drawCircle(x,y,60,fill=player.color,border='black',borderWidth=3)
+        
+        drawLabel(f'{player.name}',x,y,size=25)
+        y+=120
 
 def drawImages(app):
     mapUI=CMU_imaging('Images/mapUI.png')
-    drawImage(mapUI, -50, app.UIy-50)
+    drawImage(mapUI, -50, app.UIy-20)
 
 
 
 def drawAttack(app):
-
     
-
     if app.lineStartLocation != None and app.lineEndLocation != None:
         drawLabel(f'Attacking Country: {app.attackCountry}',
-                  800, 320, size=16, bold=True, fill=app.activePlayer.color)
+                  800, 280, size=16, bold=True, fill=app.activePlayer.color)
         drawLabel(f'Defending Country: {app.defendCountry}',
-                  800, 360, size=16, bold=True, fill=app.activePlayer.color)
+                  800, 320, size=16, bold=True, fill=app.activePlayer.color)
         
         x0, y0 = app.lineStartLocation
         x1, y1 = app.lineEndLocation
@@ -704,14 +729,15 @@ def drawAttack(app):
         
 
 def drawPhaseUI(app):
+    drawRect(600,250,400,275,fill='black',opacity=30)
     drawLabel(f"Current Player: {app.activePlayer}",
-          800, 400, size=16, bold=True, fill=app.activePlayer.color)
+          800, 360, size=16, bold=True, fill=app.activePlayer.color)
     drawLabel(f"Current Phase: {app.activePlayer.phases[app.activePlayer.phaseIndex]}",
-          800, 440, size=16, bold=True, fill=app.activePlayer.color)
+          800, 400, size=16, bold=True, fill=app.activePlayer.color)
     drawLabel(f"Attacker win probability: {app.probability}",
-          800, 480, size=16, bold=True, fill=app.activePlayer.color)
+          800, 440, size=16, bold=True, fill=app.activePlayer.color)
     drawLabel(f"{app.message}",
-          800, 520, size=16, bold=True, fill='black')
+          800, 480, size=16, bold=True, fill='black')
 
 
 def onMouseMove(app, mouseX, mouseY):
