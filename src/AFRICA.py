@@ -295,33 +295,6 @@ for _, row in filtered_world_data.iterrows():
     country_name_to_code[country_name]=country_code
 
 
-def pathSolver(startCountry, endCountry, playerOwned, visited=None):
-    print('pathSolver is Running~!!!')
-
-    if visited is None:
-        visited = set()
-
-    # Base case: If start and end are the same country, return the path
-    if startCountry == endCountry:
-        return [startCountry]
-
-    visited.add(startCountry)
-
-    # Iterate through countries
-    for neighbor in country_neighbors.get(startCountry, []):
-        print('pathSolver is Running~!!!')
-        # ifLegal: Only consider neighbors owned by the same player and not yet visited
-        if neighbor in playerOwned and neighbor not in visited:
-            
-
-
-            path = pathSolver(neighbor, endCountry, playerOwned, visited)
-            if path!=None: 
-                return [startCountry] + path
-
-    # If no valid path is found, return False
-    return False
-
 territories={1: ['EGY', 'LBY', 'TUN', 'DZA', 'MAR', 'SDN'],  # North Africa
     2: ['CIV', 'BEN', 'TGO', 'GHA', 'SEN', 'NGA', 'GMB', 'MLI', 'BFA', 'NER', 'GNB', 'GHA', 'MRT'],  # West Africa
     3: ['CAM', 'GAB', 'CAF', 'COD','GAB', 'COG','CMR'],  # Central Africa
@@ -632,16 +605,50 @@ def onKeyPress(app,key):
         else:
             app.activePlayer.phaseIndex+=1
 
+def pathSolver(startCountry, endCountry, playerOwned, visited=None):
+    print('pathSolver is Running~!!!')
+
+    if visited is None:
+        visited = set()
+
+    # Base case: If start and end are the same country, return the path
+    if startCountry == endCountry:
+        return [startCountry]
+
+    visited.add(startCountry)
+
+    # Iterate through countries
+    for neighbor in country_neighbors.get(country_name_to_code[startCountry], []):
+        
+        print(country_code_to_name)
+        if neighbor not in country_code_to_name:
+            continue
+        neighbor=country_code_to_name[neighbor]
+        print(f'pathSolver is Running~!!!   {neighbor}')
+        # ifLegal: Only consider neighbors owned by the same player and not yet visited
+        if neighbor in playerOwned and neighbor not in visited:
+            
+
+
+            path = pathSolver(neighbor, endCountry, playerOwned, visited)
+            if path!=None: 
+                return [startCountry] + path
+
+    # If no valid path is found, return False
+    return None
+
 def pathFinder(app,startCountry, endCountry):
     
     if startCountry and endCountry in app.activePlayer.owned:
-        countryPath=pathSolver(startCountry, endCountry,app.activePlayer)
-        if countryPath==False:
+
+        countryPath=pathSolver(startCountry, endCountry, app.activePlayer.owned)
+        if countryPath==None:
             app.message='No Valid Paths to Fortification' 
         else:
             coordPath=[]
             for country in countryPath:
                 coordPath.append(get_center(country_shapes[country]))
+            print(f"pathFinder: {coordPath}")
             return coordPath
             
 def onMouseDrag(app, mouseX, mouseY):
@@ -654,10 +661,13 @@ def onMouseDrag(app, mouseX, mouseY):
             app.defendCountry = find_nearest_country(mouseX, mouseY, country_shapes, app)
 
         elif app.activePlayer.phases[app.activePlayer.phaseIndex]=='Fortification':
+            withinSubregion(app,mouseX,mouseY)
+            withinCountryinSub(app,mouseX,mouseY)
             app.fortEnd = find_nearest_country(mouseX, mouseY, country_shapes, app)
+
             app.fortPath = pathFinder(app,app.fortStart,app.fortEnd)
             print(app.fortStart,app.fortEnd)
-            print(app.fortPath)
+            print(f"onMouseDrag: {app.fortPath}")
             
 
             
@@ -786,7 +796,6 @@ def drawAttack(app):
             drawLine(x0, y0, x1, y1, fill='black', lineWidth=3, dashes=app.draggingline,arrowEnd=True)
         
 def drawFortify(app):
-    print(app.fortPath)
     if app.fortPath:
         for i in range(len(app.fortPath) - 1):
             x1, y1 = app.fortPath[i]
