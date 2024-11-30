@@ -428,6 +428,19 @@ def get_random_half_countries(country_shapes):
     return country_list[:half_count]
 
 
+class Country:
+    def __init__(self,name):
+        self.name=name
+        self.polygons=country_shapes[self.name]
+        self.code=country_name_to_code[self.name]
+        for player in app.players:
+            if self.name in app.players.owned:
+                self.owner=player
+        
+        
+
+        
+
 class Player:
 
     def __init__(self,startingCountries,color):
