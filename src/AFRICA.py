@@ -671,11 +671,18 @@ def drawUI(app):
     drawLabel(f"In Countries: {app.countriesIn}",650,675,size=25)
 
 def CMU_imaging(file_path):
-    return CMUImage(Image.open(file_path))
+    
+    image=Image.open(file_path)
+
+    if file_path=='Images/mapUI.png':
+        image.resize((rounded(imageWidth*1.8), rounded(imageHeight*0.90))) 
+    
+    else:
+        return CMUImage(image)
 
 def drawImages(app):
     mapUI=CMU_imaging('Images/mapUI.png')
-    drawImage(mapUI, 0, app.UIy)
+    drawImage(mapUI, -50, app.UIy-50)
 
 
 
