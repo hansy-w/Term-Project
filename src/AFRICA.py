@@ -649,6 +649,8 @@ def pathFinder(app,startCountry, endCountry):
             for country in countryPath:
                 coordPath.append(get_center(country_shapes[country]))
             print(f"pathFinder: {coordPath}")
+            app.message="Fortification Path Found!"
+            
             return coordPath
             
 def onMouseDrag(app, mouseX, mouseY):
@@ -701,6 +703,7 @@ def onMouseRelease(app, mouseX, mouseY):
         
     elif app.activePlayer.phases[app.activePlayer.phaseIndex]=='Reinforcement':
         app.fortEnd=find_nearest_country(mouseX, mouseY, country_shapes, app)
+        
     
 
 def onMousePress(app,mouseX,mouseY):
@@ -731,6 +734,7 @@ def redrawAll(app):
     drawCountries(app)
 
     drawPhaseUI(app)
+    drawUI(app)
 
     if app.activePlayer.phases[app.activePlayer.phaseIndex]=='Attack':
         drawAttack(app)
@@ -738,7 +742,7 @@ def redrawAll(app):
     elif app.activePlayer.phases[app.activePlayer.phaseIndex]=='Fortification':
         drawFortify(app)
 
-    drawUI(app)
+    
 
 def drawUI(app):
     # drawRect(0,app.UIy,app.width,app.height-app.UIy,fill='linen')
