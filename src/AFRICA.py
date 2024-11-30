@@ -364,11 +364,11 @@ def blitz(attacker, defender):
         attacker -= attacker_losses
         defender -= defender_losses
 
-        print(f"Attacker: {attacker} troops remaining, Defender: {defender} troops remaining.")
+        # print(f"Attacker: {attacker} troops remaining, Defender: {defender} troops remaining.")
 
     return attacker_losses, defender_losses
 
-def monteCarloBlitzSimulation(attacker_initial, defender_initial, simulations=10000):
+def monteCarloBlitzSimulation(attacker_initial, defender_initial, simulations=30000):
     attacker_wins_total = 0
     defender_wins_total = 0
     
@@ -511,7 +511,7 @@ def onAppStart(app):
 
     app.activeGame=Game(app)
     app.activeGame.start(app)
-    
+
 
     app.activePlayer=app.players[0]
 
@@ -551,7 +551,7 @@ def drawCountries(app):
                     color='dimGray'
                 
                 elif (country_name_to_code[country_name] in app.neighbors 
-                      and app.nearestCountry in app.activePlayer.owned 
+                      and app.nearest_country in app.activePlayer.owned 
                       and country_name in app.activePlayer.owned 
                       and app.activePlayer.phases[app.activePlayer.phaseIndex]=='Attack'):
                     color='red'
