@@ -508,9 +508,10 @@ def onAppStart(app):
     app.lineStartLocation = None
     app.lineEndLocation = None
 
-    app.activeGame=Game(app)
 
+    app.activeGame=Game(app)
     app.activeGame.start(app)
+    
 
     app.activePlayer=app.players[0]
 
@@ -548,7 +549,11 @@ def drawCountries(app):
             else:       
                 if country_name==app.nearest_country:
                     color='dimGray'
-                elif country_name_to_code[country_name] in app.neighbors and country_name not in app.activePlayer.owned and app.activePlayer.phases[app.activePlayer.phaseIndex]=='Attack':
+                
+                elif (country_name_to_code[country_name] in app.neighbors 
+                      and app.nearestCountry in app.activePlayer.owned 
+                      and country_name in app.activePlayer.owned 
+                      and app.activePlayer.phases[app.activePlayer.phaseIndex]=='Attack'):
                     color='red'
                 else:
                     if country_name in app.player1.owned:
@@ -604,8 +609,8 @@ def onMouseRelease(app, mouseX, mouseY):
     withinCountryinSub(app,mouseX,mouseY)
     app.defendCountry = find_nearest_country(mouseX, mouseY, country_shapes, app)
 
-    if country_name_to_code[app.defendCountry] not in get_neighbors(country_name_to_code[app.attackCountry]):
-        app.defendCountry=None
+    if country_name_to_code[app.defendCountry] not in get_neighbors(country_name_to_code[app.attackCountry]):        
+        app.defendCountry=None 
         return None
     
     for player in app.activeGame.players:
@@ -649,6 +654,7 @@ def redrawAll(app):
 
 def drawUI(app):
     drawRect(0,app.UIy,app.width,app.height-app.UIy,fill='linen')
+    drawRect(50,600,100,100,fill='red') #Attack Button 
 
     drawLabel(f"Country: {country_name_to_code[app.nearest_country]}",650,600,size=25)
     drawLabel(f"Population: {app.population}",650,625,size=25)
