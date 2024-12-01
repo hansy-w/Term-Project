@@ -295,25 +295,6 @@ for _, row in filtered_world_data.iterrows():
     country_name_to_code[country_name]=country_code
 
 
-territories={1: ['EGY', 'LBY', 'TUN', 'DZA', 'MAR', 'SDN'],  # North Africa
-    2: ['CIV', 'BEN', 'TGO', 'GHA', 'SEN', 'NGA', 'GMB', 'MLI', 'BFA', 'NER', 'GNB', 'GHA', 'MRT'],  # West Africa
-    3: ['CAM', 'GAB', 'CAF', 'COD','GAB', 'COG','CMR'],  # Central Africa
-    4: ['ETH', 'KEN', 'TZA', 'SOM', 'UGA', 'RWA', 'ERI', 'SSD'],  # East Africa
-    5: ['ZAF', 'BWA', 'NAM', 'ZWE', 'AGO'],  # Southern Africa
-    6: ['MDG'],  # Island Countries
-    7: ['MOZ', 'LBR', 'ZMB','MWI'],  # Central and Southern Regions
-             }
-
-region_colors = {
-        1: "lightBlue",  # North Africa
-        2: "lightGreen",  # West Africa
-        3: "lightYellow",  # Central Africa
-        4: "lightCoral",   # East Africa
-        5: "lightPink",    # Southern Africa
-        6: "black",  # Horn of Africa
-        7: "red",  # Great Lakes Region
-    }
-
 def get_neighbors(country_code):
     return country_neighbors.get(country_code, [])
 
@@ -334,6 +315,35 @@ def get_center(name_polygons):
 
 ###########################################################################################
 #Helper Functions for MVC
+territories={1: {'EGY', 'LBY', 'TUN', 'DZA', 'MAR', 'SDN'},  # North Africa
+    2: {'CIV', 'BEN', 'TGO', 'GHA', 'SEN', 'NGA', 'GMB', 'MLI', 'BFA', 'NER', 'GNB', 'GHA', 'MRT'},  # West Africa
+    3: {'CAM', 'GAB', 'CAF', 'COD','GAB', 'COG','CMR'},  # Central Africa
+    4: {'ETH', 'KEN', 'TZA', 'SOM', 'UGA', 'RWA', 'ERI', 'SSD'},  # East Africa
+    5: {'ZAF', 'BWA', 'NAM', 'ZWE', 'AGO'},  # Southern Africa
+    6: {'MDG'},  # Island Countries
+    7: {'MOZ', 'LBR', 'ZMB','MWI'},  # Central and Southern Regions
+             }
+
+region_colors = {
+        1: "lightBlue",  # North Africa
+        2: "lightGreen",  # West Africa
+        3: "lightYellow",  # Central Africa
+        4: "lightCoral",   # East Africa
+        5: "lightPink",    # Southern Africa
+        6: "black",  # Horn of Africa
+        7: "red",  # Great Lakes Region
+    }
+
+continent_bonus={
+    1:3,
+    2:3,
+    3:3,
+    4:3,
+    5:3,
+    6:3,
+    7:3,
+}
+
 def rollDie():
     return random.randint(1, 6)
 
@@ -446,6 +456,7 @@ class Country:
         
 
 class Player:
+    
 
     def __init__(self,startingCountries,color):
         self.active=False
@@ -455,16 +466,30 @@ class Player:
         self.phaseIndex=0
         self.gamePhase=self.phases[self.phaseIndex]
         self.name="Hans"
+
+         
+        self.continentsOwned=self.get_continents_owned()
     
     def __repr__(self):
         return f"{self.name}"
     
-    def drawArmies(self):
-        for country in self.owned:
-            pass
+    def get_continents_owned(self, territories):
+        continents_owned = set()  
+        for continent, countries in territories.items():
+            if countries.issubset(self.owned):  
+                continents_owned.add(continent)
+        return continents_owned 
     
-    def fortify(self):
-        pass
+    def calculate_reinforcements(self):
+        num_territories= len(self.owned)
+        base = max(num_territories // 3, 3)  # Minimum 3 reinforcements
+
+        bonus = sum(continent_bonus[continent] for continent in self.continentsOwned)
+
+        total = base + bonus
+        
+        return total
+        
 
     
         
@@ -703,7 +728,7 @@ def onMouseRelease(app, mouseX, mouseY):
         
     elif app.activePlayer.phases[app.activePlayer.phaseIndex]=='Reinforcement':
         app.fortEnd=find_nearest_country(mouseX, mouseY, country_shapes, app)
-        
+
     
 
 def onMousePress(app,mouseX,mouseY):
