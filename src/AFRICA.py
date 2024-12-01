@@ -500,6 +500,7 @@ class Player:
         
         else:
             app.message="ATTACK FAILED"
+            app.submessage=f"Attacker: {app.activePlayer.owned[app.attackCountry]} troops remaining, Defender: {app.defendPlayer.owned[defender]} troops remaining."
             
     def reinforcement(self,giver,receiver,num):
 
@@ -553,7 +554,8 @@ def onAppStart(app):
     app.neighbors= []
     app.tView=False
     app.probability=""
-    app.message="Click on countries to deploy forces. \n Left Click to withdraw"
+    app.message="Click on countries to deploy forces"
+    app.submessage='Left Click to withdraw troops'
 
     app.reinforceCountry=None
 
@@ -563,6 +565,7 @@ def onAppStart(app):
     app.draggingLine = False
     app.lineStartLocation = None
     app.lineEndLocation = None
+    app.reinforce_from_attack=False
 
     app.fortStart=None
     app.fortEnd=None
@@ -668,6 +671,7 @@ def onKeyPress(app,key):
 
 def move_to_next_phase(app):
     app.message=""
+    app.submessage=""
     app.nearestCountry=None
     app.reinforceCountry=None
 
@@ -688,18 +692,23 @@ def move_to_next_phase(app):
             app.playerIndex+=1
             app.activePlayer=app.players[app.playerIndex%2]
             app.activePlayer.reinforcements=app.activePlayer.calculate_reinforcements(app)
-            app.message="Click on countries to deploy forces. \n Left Click to withdraw"
+            app.message="Click on countries to deploy forces"
+            app.submessage='Left Click to withdraw troops'
 
     elif app.activePlayer.phaseIndex==0:
         if app.activePlayer.reinforcements!=0:
             app.message="you must deploy all reinforcements before attacking"
+            app.submessage=''
+
         else:
             app.activePlayer.phaseIndex+=1
             app.message="Click and drag to launch an Attack"
+            app.submessage=''
             
     elif app.activePlayer.phaseIndex==1:
         app.activePlayer.phaseIndex+=1
         app.message="Move troops between countries you own"
+        app.submessage=''
     
 
 
@@ -745,12 +754,14 @@ def pathFinder(app,startCountry, endCountry):
         countryPath=pathSolver(startCountry, endCountry, app.activePlayer.owned)
         if countryPath==None:
             app.message='No Valid Paths to Fortification' 
+            app.submessage=''
         else:
             coordPath=[]
             for country in countryPath:
                 coordPath.append(get_center(country_shapes[country]))
             print(f"pathFinder: {coordPath}")
             app.message="Fortification Path Found!"
+            app.submessage=''
             
             return coordPath
             
@@ -804,6 +815,7 @@ def onMouseRelease(app, mouseX, mouseY):
         else:
             app.probability='N/A'
             app.message='not valid attack'
+            app.submessage=''
         
     elif app.activePlayer.phases[app.activePlayer.phaseIndex]=='Reinforcement':
         app.fortEnd=find_nearest_country(mouseX, mouseY, country_shapes, app)
@@ -829,6 +841,7 @@ def onMousePress(app,mouseX,mouseY,button):
                 
                 if app.activePlayer.reinforcements==0:
                     app.message="ALL REINFORCEMENTS DEPLOYED"
+                    app.submessage=''
 
         elif app.activePlayer.phases[app.activePlayer.phaseIndex]=='Attack':
             app.lineStartLocation=mouseX,mouseY
@@ -857,8 +870,10 @@ def onMousePress(app,mouseX,mouseY,button):
                 
                 if app.activePlayer.reinforcements==0:
                         app.message="ALL REINFORCEMENTS DEPLOYED"
+                        app.submessage=''
                 else:
-                    app.message="Click on countries to deploy forces. \n Left Click to withdraw"
+                    app.message="Click on countries to deploy forces"
+                    app.submessage='Left Click to withdraw troops'
             
         if app.activePlayer.phases[app.activePlayer.phaseIndex]=='Attack':
                 
@@ -872,7 +887,8 @@ def onMousePress(app,mouseX,mouseY,button):
                         
                     app.activePlayer.attack(app.defendPlayer,app.attackCountry,app.defendCountry,app)
                     if app.defendCountry in app.activePlayer.owned:
-                        app.attackCountry=app.defendCountry
+                        app.reinforce_from_attack=True
+                          
                     
                 
 
@@ -1005,6 +1021,11 @@ def drawAttack(app):
             drawLine(x0, y0, x1, y1, fill='black', lineWidth=3, dashes=app.draggingline,arrowEnd=True)
             drawLabel(f"Attacker win probability: {app.probability}",
             800, 440, size=16, bold=True, fill=app.activePlayer.color)
+        
+    if app.attackCountry in app.activePlayer.owned and app.defendCountry in app.activePlayer.owned:
+        x1,y1=get_center(country_shapes[app.attackCountry])
+        x2,y2=get_center(country_shapes[app.defendCountry])
+        drawLine(x1, y1, x2, y2, lineWidth=2, fill='black',dashes=True)
 
         
         
@@ -1030,11 +1051,15 @@ def drawPhaseUI(app):
     
     drawLabel(f"{app.message}",
           800, 480, size=20, bold=True, fill='white')
+    drawLabel(f"{app.submessage}",
+          800, 500, size=16, bold=True, fill='white')
+
 
 
 def onMouseMove(app, mouseX, mouseY):
     if set(app.activePlayer.owned)==set(country_shapes):
             app.message=f"{app.activePlayer} WINS"
+            app.submessage='GAME OVER'
 
     if mouseY<app.UIy:
         withinSubregion(app,mouseX,mouseY)
