@@ -461,7 +461,7 @@ class Player:
         self.phases=['Reinforcement','Attack','Fortification']
         self.phaseIndex=0
         self.gamePhase=self.phases[self.phaseIndex]
-        self.name="Hans"
+        self.name=input(f"Enter name for {self.color}:  ")
         self.reinforcements=3
 
          
@@ -499,6 +499,7 @@ class Player:
             print(defender in self.owned)
             app.message="ATTACK SUCCESSFUL"
             app.submessage=f"Select Troops to fortify new country"
+            self.continentsOwned=self.get_continents_owned(territories)
 
         
         else:
