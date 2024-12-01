@@ -254,6 +254,7 @@ def find_nearest_country(mouse_x, mouse_y, country_shapes, app):
     return nearest_country
 
 country_codes = set(filtered_world_data['adm0_a3'])
+
 def get_country_neighbors():
     response = requests.get("https://restcountries.com/v3.1/all?fields=cca3,borders")
 
@@ -496,6 +497,9 @@ class Player:
             other.owned.pop(defender)
             self.owned[defender]=1
             print(defender in self.owned)
+            app.message="ATTACK SUCCESSFUL"
+            app.submessage=f"Select Troops to fortify new country"
+
         
         else:
             app.message="ATTACK FAILED"
@@ -663,6 +667,7 @@ def onKeyPress(app,key):
 
     if key=='w':
         app.activePlayer.owned={key: 1 for key in country_shapes}
+
         # while len(app.activePlayer.owned)!=1:
         #     removed_country=app.activePlayer.owned.popitem()
         #     if removed_country in country_shapes:
@@ -917,19 +922,6 @@ def onMousePress(app,mouseX,mouseY,button):
                         move_to_next_phase(app)
 
                           
-                    
-                
-
-            
-        
-
-            
-            
-        
-
-
-
-
 
 def redrawAll(app):
     
@@ -979,6 +971,7 @@ def drawUI(app):
 
     drawImages(app)
     drawPlayers(app)
+    drawLabel("Press the spacebar to skip phases",325,730,size=30)
 
     # drawRect(50,630,100,100,fill='gray') #Attack Button 
 
@@ -989,7 +982,7 @@ def drawUI(app):
         drawLabel(getButtonName(i),gap+50,650,size=70 if i<2 else 20)
         gap+=150
     
-    drawLabel(f"Country: {app.nearest_country}",1000,600,size=25)
+    drawLabel(f"Country: {app.nearest_country}",900,600,size=25)
     # drawLabel(f"Population: {app.population}",650,625,size=25)
     # drawLabel(f"Neighbor(s): {app.neighbors}",650,650,size=25)
     # drawLabel(f"In Countries: {app.countriesIn}",650,675,size=25)
@@ -997,8 +990,8 @@ def drawUI(app):
                 if app.nearest_country in player.owned:
                     owner=player
     if app.nearest_country:
-        drawLabel(f"Owner: {owner}",1000,630,size=25)
-        drawLabel(f"Troops: {owner.owned[app.nearest_country]}",1000,660,size=25)
+        drawLabel(f"Owner: {owner}",900,630,size=25)
+        drawLabel(f"Troops: {owner.owned[app.nearest_country]}",900,660,size=25)
     
 
 def CMU_imaging(file_path):
@@ -1011,15 +1004,22 @@ def CMU_imaging(file_path):
     return CMUImage(image)
 
 def drawPlayers(app):
-    x=1100
-    y=80
+    x=990
+    y=50
     for player in app.players:
 
         drawRect(x,y-50,200,100,fill='black',opacity=50,border=player.color)
 
+        drawLabel(f'Countries: {len(player.owned)}',1120,y, size=20,bold=True,fill='white')
+        drawLabel(f'Territories: {len(player.continentsOwned)}',1120,y+30, size=20,bold=True,fill='white')
+
+
         drawCircle(x,y,60,fill=player.color,border='black',borderWidth=3)
         
         drawLabel(f'{player.name}',x,y,size=25)
+        if player==app.activePlayer:
+            drawLine(800,y,900,y,lineWidth=20,arrowEnd=True)
+            drawLabel("ACTIVE",850,y,fill='white',bold=True,size=15)
         y+=120
 
 def drawImages(app):
@@ -1090,7 +1090,7 @@ def drawPhaseUI(app):
 def onMouseMove(app, mouseX, mouseY):
     if set(app.activePlayer.owned)==set(country_shapes):
             app.message=f"{app.activePlayer} WINS"
-            app.submessage='GAME OVER'
+            app.submessage='Press R to Restart, T to go back to Menu'
 
     if mouseY<app.UIy:
         withinSubregion(app,mouseX,mouseY)
