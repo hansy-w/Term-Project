@@ -477,15 +477,41 @@ class Player:
                 continents_owned.add(continent)
         return continents_owned 
     
-    def calculate_reinforcements(self):
+    def calculate_reinforcements(self,app):
         num_territories= len(self.owned)
         base = max(num_territories // 3, 3)  # Minimum 3 reinforcements
 
         bonus = sum(continent_bonus[continent] for continent in self.continentsOwned)
 
         total = base + bonus
+        app.message = f"{total} Reinforcements Received for {len(self.owned)} countries and {len(self.continentsOwned)} Regions"
         
         return total
+    
+    def attack(self,other,attacker,defender,app):
+        self_losses,other_losses=blitz(self.owned[attacker],other.owned[defender])
+        self.owned[attacker]-=self_losses
+        other.owned[defender]-=other_losses
+
+        if other.owned[defender]<=0:
+            other.owned.pop(defender)
+            self.owned[defender]=1
+            print(defender in self.owned)
+        
+        else:
+            app.message="ATTACK FAILED"
+            
+    def reinforcement(self,giver,receiver,num):
+
+
+        self.owned[giver]-=num
+        self.owned[receiver]+=num
+
+
+
+        
+        
+
         
 
     
@@ -546,6 +572,8 @@ def onAppStart(app):
 
     app.playerIndex=0
     app.activePlayer=app.players[app.playerIndex%2]
+    
+    
     
 
 
@@ -633,16 +661,19 @@ def move_to_next_phase(app):
             app.activePlayer.phaseIndex=0
             app.playerIndex+=1
             app.activePlayer=app.players[app.playerIndex%2]
-            app.activePlayer.reinforcements=app.activePlayer.calculate_reinforcements()
+            app.activePlayer.reinforcements=app.activePlayer.calculate_reinforcements(app)
+            app.message="Click on countries to deploy forces. Left Click to withdraw"
 
     elif app.activePlayer.phaseIndex==0:
         if app.activePlayer.reinforcements!=0:
             app.message="you must deploy all reinforcements before attacking"
         else:
             app.activePlayer.phaseIndex+=1
+            app.message="Click and drag to launch an Attack"
             
     elif app.activePlayer.phaseIndex==1:
         app.activePlayer.phaseIndex+=1
+        app.message="Click and drag to launch an Attack"
 
 
 
@@ -735,11 +766,14 @@ def onMouseRelease(app, mouseX, mouseY):
         for player in app.activeGame.players:
                 if app.defendCountry in player.owned:
                     defendPlayer=player
-                    break
-        
-
+            
         if app.attackCountry in app.activePlayer.owned and app.defendCountry not in app.activePlayer.owned:
             app.probability=monteCarloBlitzSimulation(app.activePlayer.owned[app.attackCountry],defendPlayer.owned[app.defendCountry])
+            
+            app.activePlayer.attack(defendPlayer,app.attackCountry,app.defendCountry,app)
+            if app.defendCountry in app.activePlayer.owned:
+                app.attackCountry=app.defendCountry
+
         else:
             app.probability='N/A'
             app.message='not valid attack'
@@ -791,6 +825,24 @@ def redrawAll(app):
         drawFortify(app)
 
     
+def getButtonName(i):
+    cancelLabel=chr(0x0252)
+    confirmLabel=chr(0x0252)
+    if i == 0: return '-'
+    elif i == 1: return '+'
+    elif i == 2: return 'CANCEL'
+    elif i == 3: return 'CONFIRM'
+
+def whichButton(app, mouseX, mouseY):
+    if mouseY>700 or mouseY<600 or mouseX<600 or mouseX>50:
+        return None
+    
+    mouseRange=mouseX/50 
+    button=int(mouseRange) #chops off decimal point
+    if mouseX>50*button and mouseX<50*button+60:
+        return button-1
+    else:
+        return
 
 def drawUI(app):
     # drawRect(0,app.UIy,app.width,app.height-app.UIy,fill='linen')
@@ -798,14 +850,25 @@ def drawUI(app):
     drawImages(app)
     drawPlayers(app)
 
-    drawRect(50,600,100,100,fill='gray') #Attack Button 
+    # drawRect(50,630,100,100,fill='gray') #Attack Button 
 
+
+    gap=50
+    for i in range(4):
+        drawRect(gap,600,100,100,fill=f'{app.activePlayer.color}',border='black')
+        drawLabel(getButtonName(i),gap+50,650,size=70 if i<2 else 20)
+        gap+=150
     
-    drawLabel(f"Country: {app.nearest_country}",650,600,size=25)
-    drawLabel(f"Population: {app.population}",650,625,size=25)
-    drawLabel(f"Neighbor(s): {app.neighbors}",650,650,size=25)
-    drawLabel(f"In Countries: {app.countriesIn}",650,675,size=25)
-    drawLabel(f"Reinforcements Available: {app.activePlayer.reinforcements}",650,700,size=25)
+    drawLabel(f"Country: {app.nearest_country}",1000,600,size=25)
+    # drawLabel(f"Population: {app.population}",650,625,size=25)
+    # drawLabel(f"Neighbor(s): {app.neighbors}",650,650,size=25)
+    # drawLabel(f"In Countries: {app.countriesIn}",650,675,size=25)
+    for player in app.activeGame.players:
+                if app.nearest_country in player.owned:
+                    owner=player
+    if app.nearest_country:
+        drawLabel(f"Owner: {owner}",1000,630,size=25)
+    drawLabel(f"Reinforcements Available: {app.activePlayer.reinforcements}",1000,660,size=25)
 
 def CMU_imaging(file_path):
     image=Image.open(file_path)
@@ -862,15 +925,16 @@ def drawFortify(app):
 
 
 def drawPhaseUI(app):
-    drawRect(600,250,400,275,fill='black',opacity=30)
+    drawRect(550,250,500,275,fill='black',opacity=30)
     drawLabel(f"Current Player: {app.activePlayer}",
           800, 360, size=16, bold=True, fill=app.activePlayer.color)
     drawLabel(f"Current Phase: {app.activePlayer.phases[app.activePlayer.phaseIndex]}",
           800, 400, size=16, bold=True, fill=app.activePlayer.color)
     drawLabel(f"Attacker win probability: {app.probability}",
           800, 440, size=16, bold=True, fill=app.activePlayer.color)
+    
     drawLabel(f"{app.message}",
-          800, 480, size=16, bold=True, fill='black')
+          800, 480, size=20, bold=True, fill='white')
 
 
 def onMouseMove(app, mouseX, mouseY):
