@@ -663,16 +663,53 @@ def onKeyPress(app,key):
         
         app.tView=not app.tView
 
-    if key=='space':
+    elif key=='space':
         move_to_next_phase(app)
 
-    if key=='w':
+    elif key=='w':
         app.activePlayer.owned={key: 1 for key in country_shapes}
 
         # while len(app.activePlayer.owned)!=1:
         #     removed_country=app.activePlayer.owned.popitem()
         #     if removed_country in country_shapes:
         #         app.players[1].owned[removed_country]=99
+
+    elif key=='r':
+        app.background='mediumBlue'
+        app.width=1200
+        app.height=800
+        app.UIy=550
+        app.nearest_country='Congo'
+        app.population=None
+        app.subregionsIn=[]
+        app.countriesIn = []
+        app.neighbors= []
+        app.tView=False
+        app.probability=""
+        app.message="Click on countries to deploy forces"
+        app.submessage='Left Click to withdraw troops'
+
+        app.reinforceCountry=None
+        
+        app.defendPlayer=None
+        app.attackCountry=None
+        app.defendCountry=None
+        app.draggingLine = False
+        app.lineStartLocation = None
+        app.lineEndLocation = None
+        app.reinforce_from_attack=False
+
+        app.fortStart=None
+        app.fortEnd=None
+        app.fortPath=None
+        app.fortNum=0
+
+        app.activeGame.start(app)
+
+        app.playerIndex=0
+        app.activePlayer=app.players[app.playerIndex%2]
+
+        app.gameOver=False
 
 
 def move_to_next_phase(app):
@@ -866,7 +903,7 @@ def onMousePress(app,mouseX,mouseY,button):
             app.fortStart=app.nearest_country
     
     else: #mouse is in ui space
-        button=whichButton(app, mouseX, mouseY)
+        button=pickButton(app, mouseX, mouseY)
         if app.activePlayer.phases[app.activePlayer.phaseIndex]=='Reinforcement': 
             if app.reinforceCountry in app.activePlayer.owned:
         
@@ -950,7 +987,7 @@ def getButtonName(i):
     elif i == 2: return 'CANCEL'
     elif i == 3: return 'CONFIRM'
 
-def whichButton(app, mouseX, mouseY):
+def pickButton(app, mouseX, mouseY):
     if mouseY < 600 or mouseY > 700:
         return None
     
@@ -1051,7 +1088,8 @@ def drawAttack(app):
             drawLine(x0, y0, x1, y1, fill='black', lineWidth=3, dashes=app.draggingline,arrowEnd=True)
             drawLabel(f"Attacker win probability: {app.probability}",
             800, 440, size=16, bold=True, fill=app.activePlayer.color)
-        
+    
+    
     if app.attackCountry in app.activePlayer.owned and app.defendCountry in app.activePlayer.owned:
         x1,y1=get_center(country_shapes[app.attackCountry])
         x2,y2=get_center(country_shapes[app.defendCountry])
@@ -1091,7 +1129,7 @@ def drawPhaseUI(app):
 def onMouseMove(app, mouseX, mouseY):
     if set(app.activePlayer.owned)==set(country_shapes):
             app.message=f"{app.activePlayer} WINS"
-            app.submessage='Press R to Restart, T to go back to Menu'
+            app.submessage='Press R to Restart'
 
     if mouseY<app.UIy:
         withinSubregion(app,mouseX,mouseY)
