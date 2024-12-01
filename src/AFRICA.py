@@ -503,9 +503,9 @@ class Player:
             
     def reinforcement(self,giver,receiver,num):
 
-
         self.owned[giver]-=num
         self.owned[receiver]+=num
+
 
 
 
@@ -557,6 +557,7 @@ def onAppStart(app):
 
     app.reinforceCountry=None
 
+    app.defendPlayer=None
     app.attackCountry=None
     app.defendCountry=None
     app.draggingLine = False
@@ -670,6 +671,7 @@ def move_to_next_phase(app):
     app.nearestCountry=None
     app.reinforceCountry=None
 
+    app.defendPlayer=None
     app.attackCountry=None
     app.defendCountry=None
     app.draggingLine = False
@@ -789,16 +791,15 @@ def onMouseRelease(app, mouseX, mouseY):
             app.defendCountry=None 
             return None
         
+        
         for player in app.activeGame.players:
                 if app.defendCountry in player.owned:
-                    defendPlayer=player
+                    app.defendPlayer=player
             
         if app.attackCountry in app.activePlayer.owned and app.defendCountry not in app.activePlayer.owned:
-            app.probability=monteCarloBlitzSimulation(app.activePlayer.owned[app.attackCountry],defendPlayer.owned[app.defendCountry])
+            app.probability=monteCarloBlitzSimulation(app.activePlayer.owned[app.attackCountry],app.defendPlayer.owned[app.defendCountry])
             
-            app.activePlayer.attack(defendPlayer,app.attackCountry,app.defendCountry,app)
-            if app.defendCountry in app.activePlayer.owned:
-                app.attackCountry=app.defendCountry
+            
 
         else:
             app.probability='N/A'
@@ -832,14 +833,18 @@ def onMousePress(app,mouseX,mouseY,button):
         elif app.activePlayer.phases[app.activePlayer.phaseIndex]=='Attack':
             app.lineStartLocation=mouseX,mouseY
             app.attackCountry=app.nearest_country
+            # if app.attackCountry==None:
+            #     app.attackCountry=app.nearest_country
         
         elif app.activePlayer.phases[app.activePlayer.phaseIndex]=='Fortification':
             app.fortStart=app.nearest_country
     
     else:
         button=whichButton(app, mouseX, mouseY)
-        if app.reinforceCountry in app.activePlayer.owned:
-            if app.activePlayer.phases[app.activePlayer.phaseIndex]=='Reinforcement': 
+        if app.activePlayer.phases[app.activePlayer.phaseIndex]=='Reinforcement': 
+            if app.reinforceCountry in app.activePlayer.owned:
+        
+            
 
                 if button==1 and app.activePlayer.reinforcements>0:
                         
@@ -854,6 +859,23 @@ def onMousePress(app,mouseX,mouseY,button):
                         app.message="ALL REINFORCEMENTS DEPLOYED"
                 else:
                     app.message="Click on countries to deploy forces. \n Left Click to withdraw"
+            
+        if app.activePlayer.phases[app.activePlayer.phaseIndex]=='Attack':
+                
+
+            if button==2:
+                onMouseDrag(app,0,0)
+                
+            elif button==3:
+                if app.attackCountry in app.activePlayer.owned and app.defendCountry not in app.activePlayer.owned: 
+                        
+                        
+                    app.activePlayer.attack(app.defendPlayer,app.attackCountry,app.defendCountry,app)
+                    if app.defendCountry in app.activePlayer.owned:
+                        app.attackCountry=app.defendCountry
+                    
+                
+
             
         
 
@@ -1013,7 +1035,7 @@ def drawPhaseUI(app):
 def onMouseMove(app, mouseX, mouseY):
     if set(app.activePlayer.owned)==set(country_shapes):
             app.message=f"{app.activePlayer} WINS"
-            
+
     if mouseY<app.UIy:
         withinSubregion(app,mouseX,mouseY)
         withinCountryinSub(app,mouseX,mouseY)
