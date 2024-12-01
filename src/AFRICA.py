@@ -641,7 +641,7 @@ def move_to_next_phase(app):
         else:
             app.activePlayer.phaseIndex+=1
             
-    elif app.activePlayer.phaseIndex==0:
+    elif app.activePlayer.phaseIndex==1:
         app.activePlayer.phaseIndex+=1
 
 
