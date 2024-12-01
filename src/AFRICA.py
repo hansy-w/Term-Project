@@ -451,10 +451,6 @@ class Country:
             if self.name in app.players.owned:
                 self.owner=player
         
-        
-
-        
-
 class Player:
     
 
@@ -466,9 +462,10 @@ class Player:
         self.phaseIndex=0
         self.gamePhase=self.phases[self.phaseIndex]
         self.name="Hans"
+        self.reinforcements=3
 
          
-        self.continentsOwned=self.get_continents_owned()
+        self.continentsOwned=self.get_continents_owned(territories)
     
     def __repr__(self):
         return f"{self.name}"
@@ -547,8 +544,9 @@ def onAppStart(app):
     app.activeGame=Game(app)
     app.activeGame.start(app)
 
-
-    app.activePlayer=app.players[0]
+    app.playerIndex=0
+    app.activePlayer=app.players[app.playerIndex%2]
+    
 
 
 
@@ -622,13 +620,31 @@ def drawCountries(app):
 
 def onKeyPress(app,key):
     if key=='t':
+        
         app.tView=not app.tView
 
-    if key=='space':        
-        if app.activePlayer.phaseIndex==2:
+    if key=='space':
+        move_to_next_phase(app)        
+        
+
+def move_to_next_phase(app):
+    if app.activePlayer.phaseIndex==2:
+
             app.activePlayer.phaseIndex=0
+            app.playerIndex+=1
+            app.activePlayer=app.players[app.playerIndex%2]
+            app.activePlayer.reinforcements=app.activePlayer.calculate_reinforcements()
+
+    elif app.activePlayer.phaseIndex==0:
+        if app.activePlayer.reinforcements!=0:
+            app.message="you must deploy all reinforcements before attacking"
         else:
             app.activePlayer.phaseIndex+=1
+            
+    elif app.activePlayer.phaseIndex==0:
+        app.activePlayer.phaseIndex+=1
+
+
 
 def pathSolver(startCountry, endCountry, playerOwned, visited=None):
     print('pathSolver is Running~!!!')
@@ -638,7 +654,9 @@ def pathSolver(startCountry, endCountry, playerOwned, visited=None):
 
     # Base case: If start and end are the same country, return the path
     if startCountry == endCountry:
+        
         return [startCountry]
+        
 
     visited.add(startCountry)
 
@@ -731,15 +749,20 @@ def onMouseRelease(app, mouseX, mouseY):
 
     
 
-def onMousePress(app,mouseX,mouseY):
+def onMousePress(app,mouseX,mouseY,button):
     app.nearest_country = find_nearest_country(mouseX, mouseY, country_shapes, app)
     
     if mouseY<app.UIy:
         if app.activePlayer.phases[app.activePlayer.phaseIndex]=='Reinforcement':
 
-            for player in app.activeGame.players:
-                if app.nearest_country in player.owned:
-                    player.owned[app.nearest_country]+=1
+            if app.nearest_country in app.activePlayer.owned:
+                if button==0 and app.activePlayer.reinforcements>0:
+                    app.activePlayer.owned[app.nearest_country]+=1
+                    app.activePlayer.reinforcements-=1
+
+                elif button==2 and app.activePlayer.owned[app.nearest_country]>1:
+                    app.activePlayer.owned[app.nearest_country]-=1
+                    app.activePlayer.reinforcements+=1
 
         elif app.activePlayer.phases[app.activePlayer.phaseIndex]=='Attack':
             app.lineStartLocation=mouseX,mouseY
@@ -778,10 +801,11 @@ def drawUI(app):
     drawRect(50,600,100,100,fill='gray') #Attack Button 
 
     
-    drawLabel(f"Country: {country_name_to_code[app.nearest_country]}",650,600,size=25)
+    drawLabel(f"Country: {app.nearest_country}",650,600,size=25)
     drawLabel(f"Population: {app.population}",650,625,size=25)
     drawLabel(f"Neighbor(s): {app.neighbors}",650,650,size=25)
     drawLabel(f"In Countries: {app.countriesIn}",650,675,size=25)
+    drawLabel(f"Reinforcements Available: {app.activePlayer.reinforcements}",650,700,size=25)
 
 def CMU_imaging(file_path):
     image=Image.open(file_path)
