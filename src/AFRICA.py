@@ -378,7 +378,6 @@ def blitz(attacker, defender):
         attacker -= attacker_losses
         defender -= defender_losses
 
-        # print(f"Attacker: {attacker} troops remaining, Defender: {defender} troops remaining.")
 
     return attacker_losses, defender_losses
 
@@ -502,7 +501,7 @@ class Player:
             app.message="ATTACK FAILED"
             app.submessage=f"Attacker: {app.activePlayer.owned[app.attackCountry]} troops remaining, Defender: {app.defendPlayer.owned[defender]} troops remaining."
             
-    def reinforcement(self,giver,receiver,num):
+    def fortify(self,giver,receiver,num):
 
         self.owned[giver]-=num
         self.owned[receiver]+=num
@@ -558,7 +557,7 @@ def onAppStart(app):
     app.submessage='Left Click to withdraw troops'
 
     app.reinforceCountry=None
-
+    
     app.defendPlayer=None
     app.attackCountry=None
     app.defendCountry=None
@@ -570,6 +569,7 @@ def onAppStart(app):
     app.fortStart=None
     app.fortEnd=None
     app.fortPath=None
+    app.fortNum=0
 
 
     app.activeGame=Game(app)
@@ -708,7 +708,8 @@ def move_to_next_phase(app):
     elif app.activePlayer.phaseIndex==1:
         app.activePlayer.phaseIndex+=1
         app.message="Move troops between countries you own"
-        app.submessage=''
+        app.submessage='' 
+        
     
 
 
@@ -781,6 +782,10 @@ def onMouseDrag(app, mouseX, mouseY):
             app.fortEnd = find_nearest_country(mouseX, mouseY, country_shapes, app)
 
             app.fortPath = pathFinder(app,app.fortStart,app.fortEnd)
+            
+            if app.fortStart and app.fortEnd:
+                app.submessage=f'{app.fortStart} will give {app.fortNum} troops to {app.fortEnd}'
+
             print(app.fortStart,app.fortEnd)
             print(f"onMouseDrag: {app.fortPath}")
             
@@ -819,6 +824,8 @@ def onMouseRelease(app, mouseX, mouseY):
         
     elif app.activePlayer.phases[app.activePlayer.phaseIndex]=='Reinforcement':
         app.fortEnd=find_nearest_country(mouseX, mouseY, country_shapes, app)
+        if app.fortStart and app.fortEnd:
+                app.submessage=f'{app.fortStart} will give {app.fortNum} troops to {app.fortEnd}'
 
     
 
@@ -852,7 +859,7 @@ def onMousePress(app,mouseX,mouseY,button):
         elif app.activePlayer.phases[app.activePlayer.phaseIndex]=='Fortification':
             app.fortStart=app.nearest_country
     
-    else:
+    else: #mouse is in ui space
         button=whichButton(app, mouseX, mouseY)
         if app.activePlayer.phases[app.activePlayer.phaseIndex]=='Reinforcement': 
             if app.reinforceCountry in app.activePlayer.owned:
@@ -871,6 +878,9 @@ def onMousePress(app,mouseX,mouseY,button):
                 if app.activePlayer.reinforcements==0:
                         app.message="ALL REINFORCEMENTS DEPLOYED"
                         app.submessage=''
+
+                        if button==3:
+                            move_to_next_phase(app)
                 else:
                     app.message="Click on countries to deploy forces"
                     app.submessage='Left Click to withdraw troops'
@@ -888,6 +898,24 @@ def onMousePress(app,mouseX,mouseY,button):
                     app.activePlayer.attack(app.defendPlayer,app.attackCountry,app.defendCountry,app)
                     if app.defendCountry in app.activePlayer.owned:
                         app.reinforce_from_attack=True
+
+        if app.activePlayer.phases[app.activePlayer.phaseIndex]=='Fortification':
+            if app.fortStart and app.fortEnd:
+                
+                if button==0 and app.fortNum>0:
+                    app.fortNum-=1
+                
+                elif button==1 and app.activePlayer.owned[app.fortStart]>app.fortNum+1:
+                    app.fortNum+=1
+                    
+                if app.fortStart and app.fortEnd:
+                    app.submessage=f'{app.fortStart} will give {app.fortNum} troops to {app.fortEnd}'
+
+                if button==3:
+                    if app.fortStart and app.fortEnd:
+                        app.activePlayer.fortify(app.fortStart,app.fortEnd,app.fortNum)
+                        move_to_next_phase(app)
+
                           
                     
                 
@@ -918,6 +946,7 @@ def redrawAll(app):
     
     elif app.activePlayer.phases[app.activePlayer.phaseIndex]=='Fortification':
         drawFortify(app)
+        
 
     
 def getButtonName(i):
@@ -1040,6 +1069,8 @@ def drawFortify(app):
                   800, 280, size=16, bold=True, fill=app.activePlayer.color)
         drawLabel(f'Fortify End: {app.fortEnd}',
                   800, 320, size=16, bold=True, fill=app.activePlayer.color)
+        
+    
 
 
 def drawPhaseUI(app):
