@@ -63,25 +63,6 @@ def geo_to_screen(lon, lat, width, height):
     screen_y = int((20037508.34 - mercator_y) * (height / 40075016.68))
     return screen_x, screen_y
 
-
-def screen_to_geo(screen_x, screen_y, width, height):
-
-    R = 6378137  
-
-    mercator_x = screen_x * (40075016.68 / width) - 20037508.34
-    mercator_y = 20037508.34 - screen_y * (40075016.68 / height)
-
-    lat_rad = np.arctan(np.sinh(mercator_y / R))
-    lat = np.degrees(lat_rad)
-
-    lon = np.degrees(mercator_x / R)
-
-    lat = max(min(lat, 90), -90)
-
-    return lon, lat
-
-
-
 territories = {
     1: ['United States of America'],
     2: ['Mexico', 'Guatemala', 'Honduras', 'El Salvador', 'Nicaragua', 'Costa Rica', 'Panama','Jamaica', 'Haiti', 'Dominican Rep.', 'Cuba', 'Puerto Rico'],
@@ -352,7 +333,7 @@ def withinCountryinSub(app, mouseX, mouseY):
 ###########################################################################################
 #Actual App Functions for MVC
 
-def onAppStart(app):
+def start_onAppStart(app):
     app.width = 1200
     app.height = 800
     app.UIy = 550
@@ -373,8 +354,6 @@ def onAppStart(app):
 
     app.name=None
     app.players = []
-
-
 
 
 def start_onStep(app):
@@ -447,6 +426,17 @@ def start_redrawAll(app):
 
 def start_onMouseMove(app, mouseX, mouseY):
     gap=80
+    if inButton(app, mouseX, mouseY, app.width//2-100, app.height//2+200-gap, 200, 50): #about
+        app.startGame = 'black'
+        return
+    else:
+        app.startGame = 'gray'
+    if inButton(app,mouseX, mouseY, app.width//2-100, app.height//2+200, 200, 50): #how to play
+        app.howTo = 'black'
+        return
+    else:
+        app.howTo = 'gray'
+    
     if mouseY < app.UIy:
         withinSubregion(app, mouseX, mouseY)
         withinCountryinSub(app, mouseX, mouseY)
@@ -454,14 +444,7 @@ def start_onMouseMove(app, mouseX, mouseY):
 
         app.population = getPopulation(app.nearest_country)
     
-    if inButton(app, mouseX, mouseY, app.width//2-100, app.height//2+200-gap, 200, 50): #about
-        app.startGame = 'black'
-    else:
-        app.startGame = 'gray'
-    if inButton(app,mouseX, mouseY, app.width//2-100, app.height//2+200, 200, 50): #how to play
-        app.howTo = 'black'
-    else:
-        app.howTo = 'gray'
+    
 
 def inButton(app, mouseX, mouseY, rectX, rectY, width, height):
     if (rectX <= mouseX <= rectX + width) and (rectY <= mouseY <= rectY + height):
@@ -469,7 +452,7 @@ def inButton(app, mouseX, mouseY, rectX, rectY, width, height):
     else:
         return False
     
-def start_onMousePress(app,mouseX,mouseY):
+def start_onMousePress(app,mouseX,mouseY,button):
     if app.startGame == 'black':
         setActiveScreen('setup')
 
@@ -478,7 +461,7 @@ def start_onMousePress(app,mouseX,mouseY):
 
 
 
-def setup_onMousePress(app, mouseX, mouseY):
+def setup_onMousePress(app, mouseX, mouseY,button):
     if inButton(app,mouseX,mouseY,app.width//2-100, app.height//2+160, 200, 50) and app.players:
         subprocess.run(["python", "src/AFRICA.py"])
     

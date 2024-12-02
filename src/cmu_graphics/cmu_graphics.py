@@ -428,7 +428,7 @@ class App(object):
             args = (self._wrapper,) + args
 
         if enFnName in ('onKeyPress', 'onKeyRelease', 'onKeyHold', 'onMousePress', 'onMouseRelease', 'onMouseDrag'):
-            if self.getPosArgCount(fn) < len(args):
+            if self.getPosArgCount(fn) < len(args) and (enFnName in ('onKeyPress', 'onKeyRelease', 'onKeyHold') or not self._wrapper._app._ranWithScreens):
                 args = args[:-1]
             elif (enFnName in ('onKeyPress', 'onKeyRelease', 'onKeyHold')
                 and self.shouldPrintCtrlWarning

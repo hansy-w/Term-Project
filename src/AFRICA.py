@@ -17,6 +17,8 @@ from PIL import Image
 
 ###########################################################################################
 # Json File Reading
+#geojson-maps.json and datahub.geojson are from
+#  https://geojson-maps.kyd.au/ and https://datahub.io/core/geo-countries#description respectively
 
 
 with open('./src/geojson-maps.json', 'r') as f:
@@ -58,7 +60,7 @@ filtered_world_data = pd.merge(
 
 ###########################################################################################
 # Start of ChatGPT generated/supported segment ######################################################
-def geo_to_screen(lon, lat, width, height):
+def africa_geo_to_screen(lon, lat, width, height):
     # Africa bounding box (approximate)
     min_lon, max_lon = -20, 55    # Longitude range of Africa
     min_lat, max_lat = -35, 37    # Latitude range of Africa
@@ -91,40 +93,6 @@ def geo_to_screen(lon, lat, width, height):
     return screen_x, screen_y
 
 
-def screen_to_geo(screen_x, screen_y, width, height):
-    # Africa bounding box (approximate)
-    min_lon, max_lon = -20, 55    # Longitude range of Africa
-    min_lat, max_lat = -35, 37    # Latitude range of Africa
-
-    # Earth radius in meters
-    R = 6378137  
-
-    # Convert bounding box lat/lon to Mercator coordinates
-    min_lat_rad = np.radians(min_lat)
-    max_lat_rad = np.radians(max_lat)
-    min_mercator_x = R * np.radians(min_lon)
-    max_mercator_x = R * np.radians(max_lon)
-    min_mercator_y = R * np.log(np.tan(np.pi / 4 + min_lat_rad / 2))
-    max_mercator_y = R * np.log(np.tan(np.pi / 4 + max_lat_rad / 2))
-
-    # Compute scaling factors
-    scale_x = width / (max_mercator_x - min_mercator_x)
-    scale_y = height / (max_mercator_y - min_mercator_y)
-    scale = min(scale_x, scale_y)  # Preserve aspect ratio
-
-    # Convert screen space to Mercator coordinates
-    mercator_x = screen_x / scale + min_mercator_x
-    mercator_y = max_mercator_y - screen_y / scale
-
-    # Convert Mercator coordinates back to latitude and longitude
-    lat_rad = np.arctan(np.sinh(mercator_y / R))
-    lon_rad = mercator_x / R
-    lat = np.degrees(lat_rad)
-    lon = np.degrees(lon_rad)
-
-    return lon, lat
-
-
 # End of ChatGPT generated/supported segment ########################################################
 ###########################################################################################
 
@@ -141,7 +109,7 @@ for _, row in filtered_world_data.iterrows():
     screen_polygons = []
     for polygon in polygons:
         simplified_polygon = polygon.simplify(0.1) ###IMPORTANT FOR FASTER LOADING SPEED: simplify the higher float the more simple
-        screen_coords = [geo_to_screen(x, y, 1200, 550) for x, y in simplified_polygon.exterior.coords]        
+        screen_coords = [africa_geo_to_screen(x, y, 1200, 550) for x, y in simplified_polygon.exterior.coords]        
         screen_polygons.append(screen_coords)
         country_shapes[country_name] = screen_polygons
 
@@ -555,6 +523,7 @@ class Game:
 #Actual App Functions for MVC
 
 def game_onAppStart(app):
+
     app.background='mediumBlue'
     app.width=1200
     app.height=800
@@ -590,8 +559,6 @@ def game_onAppStart(app):
 
     app.playerIndex=0
     app.activePlayer=app.players[app.playerIndex%2]
-
-    app.gameOver=False
 
     app.showTurnBanner = False
     app.bannerOpacity = 100  # Fully opaque
@@ -646,7 +613,6 @@ def drawCountries(app):
                         color=app.player2.color
                 
                 
-            if app.gameOver==False:
                 drawPolygon(*L,fill=color, border='Black', borderWidth=1,
                 opacity=100, rotateAngle=0, dashes=False, visible=True)
 
@@ -791,7 +757,7 @@ def pathFinder(app,startCountry, endCountry):
             
             return coordPath
             
-def game_onMouseDrag(app, mouseX, mouseY):
+def game_onMouseDrag(app, mouseX, mouseY, button):
      if mouseY<app.UIy:
         if app.activePlayer.phases[app.activePlayer.phaseIndex]=='Attack':
             app.draggingline = True
@@ -818,7 +784,7 @@ def game_onMouseDrag(app, mouseX, mouseY):
             
         
         
-def game_onMouseRelease(app, mouseX, mouseY):
+def game_onMouseRelease(app, mouseX, mouseY, button):
     
     app.draggingline = False
     withinSubregion(app,mouseX,mouseY)
@@ -915,7 +881,7 @@ def game_onMousePress(app,mouseX,mouseY,button):
                 
 
             if button==2:
-                game_onMouseDrag(app,0,0)
+                game_onMouseDrag(app,0,0,0)
                 
             elif button==3:
                 if (app.attackCountry in app.activePlayer.owned and 
