@@ -11,6 +11,7 @@ import pandas as pd
 import json
 import numpy as np
 from PIL import Image
+import subprocess
 
 ###########################################################################################
 # Json File Reading
@@ -478,22 +479,29 @@ def start_onMousePress(app,mouseX,mouseY):
 
 
 def setup_onMousePress(app, mouseX, mouseY):
-    app.players = []
-    for i in range(4):
-        name_response = app.getTextInput(f'Enter the name for Player {i + 1}:')
-        name = 'Unknown' if not name_response else name_response
-        if name=='Unknown':
-            break 
-        color = app.getTextInput(f'Enter the color for Player {i + 1} (e.g., lightgreen, lightblue):')
-        color = 'Unknown' if not color else color
-        if color=='Unknown':
-            break
-        app.players.append({'name': name, 'color': color})
+    if inButton(app,mouseX,mouseY,app.width//2-100, app.height//2+160, 200, 50) and app.players:
+        subprocess.run(["python", "src/AFRICA.py"])
+    
+    else:
+        app.players = []
+        for i in range(2):
+            name_response = app.getTextInput(f'Enter the name for Player {i + 1}:')
+            name = 'Unknown' if not name_response else name_response
+            # if name=='Unknown':
+            #     break 
+            color = app.getTextInput(f'Enter the color for Player {i + 1} (e.g., lightgreen, lightblue):')
+            color = 'Unknown' if not color else color
+            # if color=='Unknown':
+            #     break
+            app.players.append({'name': name, 'color': color})
 
-    app.showMessage('Player setup complete!')
+        app.showMessage('Player setup complete!')
+
+        global players 
+        players = app.players 
 
 def setup_redrawAll(app):
-    drawLabel('Click the mouse to set up players',
+    drawLabel('Click in empty space to set up players, then start game!',
               app.width / 2, app.height / 2 - 50, size=24, bold=True)
     if app.players:
         for i, player in enumerate(app.players):
@@ -503,10 +511,6 @@ def setup_redrawAll(app):
     drawRect(app.width//2-100, app.height//2+160, 200, 50, fill = 'lightgray', border = app.startGame, borderWidth = 3)
 
     drawLabel('Start Game', app.width//2, app.height//2+180, size = 20, fill = 'black')
-
-def setup_onMousePress(app,mouseX,mouseY):
-    if inButton(app.width//2-100, app.height//2+160, 200, 50):
-        setActiveScreen('game')
 
     
 

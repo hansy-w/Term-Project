@@ -13,6 +13,8 @@ import random
 import numpy as np
 import os
 from PIL import Image
+# import start_screen
+
 ###########################################################################################
 # Json File Reading
 
@@ -532,6 +534,12 @@ class Game:
 
         starting2 = set(country_shapes.keys()).difference(starting1)
 
+        # players=start_screen.players
+
+        # app.player1 = Player(starting1, players[0]['color'], name=players[0]['name'])
+
+        # app.player2 = Player(starting2, players[1]['color'], name=players[1]['name'])
+        
         app.player1 = Player(starting1,'lightgreen')
 
         app.player2 = Player(starting2,'lightblue')
