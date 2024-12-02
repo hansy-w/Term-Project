@@ -286,27 +286,7 @@ def drawRisk(app):
     image=CMUImage(image)
     drawImage(image,app.width//2-imageWidth//2, app.riskY-imageHeight,opacity=app.riskOpacity)
 
-def onStep(app):
-    
 
-    app.riskOpacity += app.opacityStep
-    if app.riskOpacity >= 100 or app.riskOpacity <= 0:
-        app.opacityStep *= -1  
-
-    # Oscillate riskY between 300 and 500
-    app.riskY += app.yStep
-    if app.riskY >= 400 or app.riskY <= 300:
-        app.yStep *= -1
-
-def drawCountry(name):
-    name_polygons = country_shapes[name]
-    for polygon in name_polygons:
-        L=[]
-        for x, y in polygon:
-            L += [x] + [y]
-
-    drawPolygon(*L,fill='lightGray', border='Black', borderWidth=1,
-             opacity=100, rotateAngle=0, dashes=False, visible=True)
 
 
 def find_nearest_country(mouse_x, mouse_y, country_shapes, app):
@@ -388,10 +368,36 @@ def onAppStart(app):
     app.opacityStep = 10
     app.yStep = 2
     app.stepsPerSecond=40
+    
+
+    app.name=None
+    app.players = []
 
 
 
 
+def start_onStep(app):
+    
+
+    app.riskOpacity += app.opacityStep
+    if app.riskOpacity >= 100 or app.riskOpacity <= 0:
+        app.opacityStep *= -1  
+
+    # Oscillate riskY between 300 and 500
+    app.riskY += app.yStep
+    if app.riskY >= 400 or app.riskY <= 300:
+        app.yStep *= -1
+
+def drawCountry(name):
+    name_polygons = country_shapes[name]
+    for polygon in name_polygons:
+        L=[]
+        for x, y in polygon:
+            L += [x] + [y]
+
+    drawPolygon(*L,fill='lightGray', border='Black', borderWidth=1,
+             opacity=100, rotateAngle=0, dashes=False, visible=True)
+    
 def drawCountries(app):
     for territory_id, country_list in territories.items():
         # get region color
@@ -422,7 +428,7 @@ def drawCountries(app):
 
 
 
-def redrawAll(app):
+def start_redrawAll(app):
     drawCountries(app)
 
 
@@ -438,7 +444,7 @@ def redrawAll(app):
 
     drawRisk(app)
 
-def onMouseMove(app, mouseX, mouseY):
+def start_onMouseMove(app, mouseX, mouseY):
     gap=80
     if mouseY < app.UIy:
         withinSubregion(app, mouseX, mouseY)
@@ -447,28 +453,72 @@ def onMouseMove(app, mouseX, mouseY):
 
         app.population = getPopulation(app.nearest_country)
     
-    if mouseButton(app, mouseX, mouseY, app.width//2-100, app.height//2+200-gap, 200, 50): #about
+    if inButton(app, mouseX, mouseY, app.width//2-100, app.height//2+200-gap, 200, 50): #about
         app.startGame = 'black'
     else:
         app.startGame = 'gray'
-    if mouseButton(app,mouseX, mouseY, app.width//2-100, app.height//2+200, 200, 50): #how to play
+    if inButton(app,mouseX, mouseY, app.width//2-100, app.height//2+200, 200, 50): #how to play
         app.howTo = 'black'
     else:
         app.howTo = 'gray'
 
-def mouseButton(app, mouseX, mouseY, rectX, rectY, width, height):
+def inButton(app, mouseX, mouseY, rectX, rectY, width, height):
     if (rectX <= mouseX <= rectX + width) and (rectY <= mouseY <= rectY + height):
         return True
     else:
         return False
+    
+def start_onMousePress(app,mouseX,mouseY):
+    if app.startGame == 'black':
+        setActiveScreen('setup')
 
+
+
+
+
+
+def setup_onMousePress(app, mouseX, mouseY):
+    app.players = []
+    for i in range(4):
+        name_response = app.getTextInput(f'Enter the name for Player {i + 1}:')
+        name = 'Unknown' if not name_response else name_response
+        if name=='Unknown':
+            break 
+        color = app.getTextInput(f'Enter the color for Player {i + 1} (e.g., lightgreen, lightblue):')
+        color = 'Unknown' if not color else color
+        if color=='Unknown':
+            break
+        app.players.append({'name': name, 'color': color})
+
+    app.showMessage('Player setup complete!')
+
+def setup_redrawAll(app):
+    drawLabel('Click the mouse to set up players',
+              app.width / 2, app.height / 2 - 50, size=24, bold=True)
+    if app.players:
+        for i, player in enumerate(app.players):
+            drawLabel(f'Player {i + 1}: {player["name"]}, Color: {player["color"]}',
+                      app.width / 2, app.height / 2 + i * 30, size=20)
+    
+    drawRect(app.width//2-100, app.height//2+160, 200, 50, fill = 'lightgray', border = app.startGame, borderWidth = 3)
+
+    drawLabel('Start Game', app.width//2, app.height//2+180, size = 20, fill = 'black')
+
+def setup_onMousePress(app,mouseX,mouseY):
+    if inButton(app.width//2-100, app.height//2+160, 200, 50):
+        setActiveScreen('game')
 
     
 
-        
+
+
+
+
 
 app.setMaxShapeCount(4000)
 
-runApp()
+def main():
+    runAppWithScreens(initialScreen='start')
 
+main()
 
