@@ -13,8 +13,7 @@ import random
 import numpy as np
 import os
 from PIL import Image
-# import start_screen
-
+from start_screen import *
 ###########################################################################################
 # Json File Reading
 #geojson-maps.json and datahub.geojson are from

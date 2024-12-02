@@ -414,7 +414,6 @@ def drawCountries(app):
 def start_redrawAll(app):
     drawCountries(app)
 
-
     drawLabel(f"Country: {app.nearest_country}   Population: {app.population}",app.width//2,740,size=25)
 
     gap=80
