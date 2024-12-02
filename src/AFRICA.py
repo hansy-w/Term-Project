@@ -98,6 +98,7 @@ def africa_geo_to_screen(lon, lat, width, height):
 
 #Generate Shapes and Helper Functions
 country_shapes = {}
+
 for _, row in filtered_world_data.iterrows():
     country_name = row['name']
     geom = row['geometry']
