@@ -546,7 +546,7 @@ class Game:
 ###########################################################################################
 #Actual App Functions for MVC
 
-def onAppStart(app):
+def game_onAppStart(app):
     app.background='mediumBlue'
     app.width=1200
     app.height=800
@@ -663,7 +663,7 @@ def drawCountries(app):
 
 
 
-def onKeyPress(app,key):
+def game_onKeyPress(app,key):
     if key=='t':
         
         app.tView=not app.tView
@@ -783,7 +783,7 @@ def pathFinder(app,startCountry, endCountry):
             
             return coordPath
             
-def onMouseDrag(app, mouseX, mouseY):
+def game_onMouseDrag(app, mouseX, mouseY):
      if mouseY<app.UIy:
         if app.activePlayer.phases[app.activePlayer.phaseIndex]=='Attack':
             app.draggingline = True
@@ -810,7 +810,7 @@ def onMouseDrag(app, mouseX, mouseY):
             
         
         
-def onMouseRelease(app, mouseX, mouseY):
+def game_onMouseRelease(app, mouseX, mouseY):
     
     app.draggingline = False
     withinSubregion(app,mouseX,mouseY)
@@ -846,7 +846,8 @@ def onMouseRelease(app, mouseX, mouseY):
 
     
 
-def onMousePress(app,mouseX,mouseY,button):
+def game_onMousePress(app,mouseX,mouseY,button):
+     
     app.nearest_country = find_nearest_country(mouseX, mouseY, country_shapes, app)
     
     if mouseY<app.UIy:
@@ -906,7 +907,7 @@ def onMousePress(app,mouseX,mouseY,button):
                 
 
             if button==2:
-                onMouseDrag(app,0,0)
+                game_onMouseDrag(app,0,0)
                 
             elif button==3:
                 if (app.attackCountry in app.activePlayer.owned and 
@@ -937,7 +938,7 @@ def onMousePress(app,mouseX,mouseY,button):
 
                           
 
-def redrawAll(app):
+def game_redrawAll(app):
     
     drawCountries(app)
 
@@ -957,7 +958,7 @@ def redrawAll(app):
         drawRect(0, app.bannerY, 1200, 150, fill=gradient(f'{app.activePlayer.color}', 'white', f'{app.activePlayer.color}', start='bottom'))
         drawLabel(f"{app.activePlayer.name}'s Turn!", 600, app.bannerY+75, size=40, bold=True, fill='gold', border='black',opacity=app.bannerOpacity)
     
-def onStep(app):
+def game_onStep(app):
     if app.bannerAnimation:
         app.bannerY -= 3  
         app.bannerOpacity -= 5  
@@ -1116,7 +1117,7 @@ def drawPhaseUI(app):
 
 
 
-def onMouseMove(app, mouseX, mouseY):
+def game_onMouseMove(app, mouseX, mouseY):
     if set(app.activePlayer.owned)==set(country_shapes):
             app.message=f"{app.activePlayer} WINS"
             app.submessage='Press R to Restart'
@@ -1132,4 +1133,8 @@ def onMouseMove(app, mouseX, mouseY):
 
 app.setMaxShapeCount(10000)
 
-runApp()
+def main():
+
+    runAppWithScreens(initialScreen="game")
+
+main()
