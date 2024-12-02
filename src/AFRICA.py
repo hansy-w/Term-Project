@@ -531,7 +531,7 @@ def activate(app):
     app.width=1200
     app.height=800
     app.UIy=550
-    app.nearest_country='Congo'
+    app.nearest_country=None
     app.population=None
     app.subregionsIn=[]
     app.countriesIn = []
@@ -1000,6 +1000,7 @@ def drawUI(app):
     for player in app.activeGame.players:
                 if app.nearest_country in player.owned:
                     owner=player
+
     if app.nearest_country:
         drawLabel(f"Owner: {owner}",900,630,size=25)
         drawLabel(f"Troops: {owner.owned[app.nearest_country]}",900,660,size=25)
