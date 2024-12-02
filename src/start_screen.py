@@ -63,6 +63,9 @@ def geo_to_screen(lon, lat, width, height):
     screen_y = int((20037508.34 - mercator_y) * (height / 40075016.68))
     return screen_x, screen_y
 
+# End of ChatGPT generated/supported segment ########################################################
+###########################################################################################
+
 territories = {
     1: ['United States of America'],
     2: ['Mexico', 'Guatemala', 'Honduras', 'El Salvador', 'Nicaragua', 'Costa Rica', 'Panama','Jamaica', 'Haiti', 'Dominican Rep.', 'Cuba', 'Puerto Rico'],
