@@ -584,6 +584,11 @@ def onAppStart(app):
     app.activePlayer=app.players[app.playerIndex%2]
 
     app.gameOver=False
+
+    app.showTurnBanner = False
+    app.bannerOpacity = 100  # Fully opaque
+    app.bannerY = 325
+    app.bannerAnimation = False
     
     
     
@@ -674,42 +679,7 @@ def onKeyPress(app,key):
         #     if removed_country in country_shapes:
         #         app.players[1].owned[removed_country]=99
 
-    elif key=='r':
-        app.background='mediumBlue'
-        app.width=1200
-        app.height=800
-        app.UIy=550
-        app.nearest_country='Congo'
-        app.population=None
-        app.subregionsIn=[]
-        app.countriesIn = []
-        app.neighbors= []
-        app.tView=False
-        app.probability=""
-        app.message="Click on countries to deploy forces"
-        app.submessage='Left Click to withdraw troops'
-
-        app.reinforceCountry=None
-        
-        app.defendPlayer=None
-        app.attackCountry=None
-        app.defendCountry=None
-        app.draggingLine = False
-        app.lineStartLocation = None
-        app.lineEndLocation = None
-        app.reinforce_from_attack=False
-
-        app.fortStart=None
-        app.fortEnd=None
-        app.fortPath=None
-        app.fortNum=0
-
-        app.activeGame.start(app)
-
-        app.playerIndex=0
-        app.activePlayer=app.players[app.playerIndex%2]
-
-        app.gameOver=False
+    
 
 
 def move_to_next_phase(app):
@@ -737,6 +707,10 @@ def move_to_next_phase(app):
             app.activePlayer.reinforcements=app.activePlayer.calculate_reinforcements(app)
             app.message="Click on countries to deploy forces"
             app.submessage='Left Click to withdraw troops'
+            app.showTurnBanner = True
+            app.bannerOpacity = 100
+            app.bannerY = 325
+            app.bannerAnimation = True
 
     elif app.activePlayer.phaseIndex==0:
         if app.activePlayer.reinforcements!=0:
@@ -935,9 +909,11 @@ def onMousePress(app,mouseX,mouseY,button):
                 onMouseDrag(app,0,0)
                 
             elif button==3:
-                if app.attackCountry in app.activePlayer.owned and app.defendCountry not in app.activePlayer.owned: 
+                if (app.attackCountry in app.activePlayer.owned and 
+                    app.defendCountry not in app.activePlayer.owned 
+                    and app.defendCountry): 
                         
-                        
+                    
                     app.activePlayer.attack(app.defendPlayer,app.attackCountry,app.defendCountry,app)
                     if app.defendCountry in app.activePlayer.owned:
                         app.reinforce_from_attack=True
@@ -976,8 +952,22 @@ def redrawAll(app):
     
     elif app.activePlayer.phases[app.activePlayer.phaseIndex]=='Fortification':
         drawFortify(app)
-        
+    
+    if app.showTurnBanner:
+        drawRect(0, app.bannerY, 1200, 150, fill=gradient(f'{app.activePlayer.color}', 'white', f'{app.activePlayer.color}', start='bottom'))
+        drawLabel(f"{app.activePlayer.name}'s Turn!", 600, app.bannerY+75, size=40, bold=True, fill='gold', border='black',opacity=app.bannerOpacity)
+    
+def onStep(app):
+    if app.bannerAnimation:
+        app.bannerY -= 3  
+        app.bannerOpacity -= 5  
 
+        if app.bannerOpacity <= 0:
+            app.bannerAnimation = False
+            app.showTurnBanner = False
+            app.bannerY = 325
+
+    
     
 def getButtonName(i):
     cancelLabel=chr(0x0252)
@@ -1140,6 +1130,6 @@ def onMouseMove(app, mouseX, mouseY):
     
     
 
-app.setMaxShapeCount(4000)
+app.setMaxShapeCount(10000)
 
 runApp()
