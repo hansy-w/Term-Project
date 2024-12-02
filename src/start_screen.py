@@ -11,45 +11,47 @@ import pandas as pd
 import json
 import numpy as np
 from PIL import Image
-import subprocess
-
+from AFRICA import *
 ###########################################################################################
 # Json File Reading
-with open('src/geojson-maps.json', 'r') as f:
-    json_data = json.load(f)
+def getJsonData():
+    with open('src/geojson-maps.json', 'r') as f:
+        json_data = json.load(f)
 
-data = []
-for feature in json_data["features"]:
-    properties = feature["properties"]
+    data = []
+    for feature in json_data["features"]:
+        properties = feature["properties"]
 
-    if properties.get("adm0_a3") == "SDS":  # I HATE SOUTH SUDAN
-        properties["adm0_a3"] = "SSD"
+        if properties.get("adm0_a3") == "SDS":  # I HATE SOUTH SUDAN
+            properties["adm0_a3"] = "SSD"
 
-    if "adm0_a3" in properties and "name" in properties and "pop_est" in properties and "subregion" in properties:
-        data.append({
-            "adm0_a3": properties["adm0_a3"],
-            "name": properties["name"],
-            "pop_est": properties["pop_est"],
-            "subregion": properties["subregion"]
-        })
+        if "adm0_a3" in properties and "name" in properties and "pop_est" in properties and "subregion" in properties:
+            data.append({
+                "adm0_a3": properties["adm0_a3"],
+                "name": properties["name"],
+                "pop_est": properties["pop_est"],
+                "subregion": properties["subregion"]
+            })
 
-df = pd.DataFrame(data)
-exceptions = ["GRL", "ISL"]
+    df = pd.DataFrame(data)
+    exceptions = ["GRL", "ISL"]
 
-filtered_df = df[(df["pop_est"] >= 2000000) | (df["adm0_a3"].isin(exceptions))]
+    filtered_df = df[(df["pop_est"] >= 2000000) | (df["adm0_a3"].isin(exceptions))]
 
-# GeoPandas file reading
-geojson_path = 'src/datahub.geojson'
-world_data = gpd.read_file(geojson_path)
-filtered_world_data = world_data[world_data['ISO_A3'].isin(filtered_df['adm0_a3'])]
-filtered_world_data = pd.merge(
-    filtered_world_data,
-    filtered_df,
-    left_on='ISO_A3',
-    right_on='adm0_a3',
-    how='left'
-)
+    # GeoPandas file reading
+    geojson_path = 'src/datahub.geojson'
+    world_data = gpd.read_file(geojson_path)
+    filtered_world_data = world_data[world_data['ISO_A3'].isin(filtered_df['adm0_a3'])]
+    filtered_world_data = pd.merge(
+        filtered_world_data,
+        filtered_df,
+        left_on='ISO_A3',
+        right_on='adm0_a3',
+        how='left')
+    
+    return filtered_world_data
 
+filtered_world_data=getJsonData()
 ###########################################################################################
 # Start of ChatGPT generated/supported segment ######################################################
 def geo_to_screen(lon, lat, width, height):
@@ -189,7 +191,7 @@ for _, row in filtered_world_data.iterrows():
     country_shapes[country_name] = screen_polygons
 
 def getPopulation(country_name):
-    matching_country = filtered_df.loc[filtered_df['name'] == country_name]
+    matching_country = filtered_world_data.loc[filtered_world_data['name'] == country_name]
     if not matching_country.empty:
         return int(matching_country['pop_est'].values[0])
     else:
@@ -222,13 +224,13 @@ def getCountryBox(name): #Iterates through countries' polygon coordinates, finds
 
 def getSubregionBoxDict():
     subregion_boxes_dict={}
-    subregions_list = filtered_df['subregion'].unique()
+    subregions_list = filtered_world_data['subregion'].unique()
 
     for subregion in subregions_list:
         leftTop = [float('inf'), float('inf')]
         rightBot = [0, 0]
 
-        for _, row in filtered_df[filtered_df['subregion'] == subregion].iterrows():
+        for _, row in filtered_world_data[filtered_world_data['subregion'] == subregion].iterrows():
             country_name = row['name']
             if country_name in country_shapes.keys():
 
@@ -256,7 +258,7 @@ def getSubregionCountries():
     sub_countries_dict = {}
     for subregion in subregion_boxes_dict:
         subregion_countries_dict = {}
-        countries_in_subregion = filtered_df[filtered_df['subregion'] == f'{subregion}']['name'].tolist()
+        countries_in_subregion = filtered_world_data[filtered_world_data['subregion'] == f'{subregion}']['name'].tolist()
         sub_countries_dict.update({str(subregion):countries_in_subregion})
 
 
@@ -336,7 +338,7 @@ def withinCountryinSub(app, mouseX, mouseY):
 ###########################################################################################
 #Actual App Functions for MVC
 
-def start_onAppStart(app):
+def onAppStart(app):
     app.width = 1200
     app.height = 800
     app.UIy = 550
@@ -356,7 +358,12 @@ def start_onAppStart(app):
     
 
     app.name=None
-    app.players = []
+    app.players=[]
+    
+
+    
+
+    
 
 
 def start_onStep(app):
@@ -465,7 +472,8 @@ def start_onMousePress(app,mouseX,mouseY,button):
 
 def setup_onMousePress(app, mouseX, mouseY,button):
     if inButton(app,mouseX,mouseY,app.width//2-100, app.height//2+160, 200, 50) and app.players:
-        subprocess.run(["python", "src/AFRICA.py"])
+        activate(app)
+        setActiveScreen('game')
     
     else:
         app.players = []
@@ -482,8 +490,7 @@ def setup_onMousePress(app, mouseX, mouseY,button):
 
         app.showMessage('Player setup complete!')
 
-        global players 
-        players = app.players 
+         
 
 def setup_redrawAll(app):
     drawLabel('Click in empty space to set up players, then start game!',
@@ -497,17 +504,11 @@ def setup_redrawAll(app):
 
     drawLabel('Start Game', app.width//2, app.height//2+180, size = 20, fill = 'black')
 
-    
-
-
-
-
-
-
 app.setMaxShapeCount(4000)
 
 def main():
-    runAppWithScreens(initialScreen='start')
+    
+
+    runAppWithScreens(initialScreen="start")
 
 main()
-

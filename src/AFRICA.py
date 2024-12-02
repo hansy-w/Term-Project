@@ -11,52 +11,53 @@ import json
 import requests
 import random
 import numpy as np
-import os
 from PIL import Image
-from start_screen import *
+
 ###########################################################################################
 # Json File Reading
 #geojson-maps.json and datahub.geojson are from
 #  https://geojson-maps.kyd.au/ and https://datahub.io/core/geo-countries#description respectively
 
 
-with open('./src/geojson-maps.json', 'r') as f:
-    json_data = json.load(f)
+def getAfricaJsonData():
+    with open('./src/geojson-maps.json', 'r') as f:
+        json_data = json.load(f)
 
-data = []
-for feature in json_data["features"]:
-    properties = feature["properties"]
+    data = []
+    for feature in json_data["features"]:
+        properties = feature["properties"]
 
-    if properties.get("adm0_a3") == "SDS":  # I HATE SOUTH SUDAN
-        properties["adm0_a3"] = "SSD"
+        if properties.get("adm0_a3") == "SDS":  # I HATE SOUTH SUDAN
+            properties["adm0_a3"] = "SSD"
 
-    if "adm0_a3" in properties and "name" in properties and "pop_est" in properties and "subregion" in properties:
-        data.append({
-            "adm0_a3": properties["adm0_a3"],
-            "name": properties["name"],
-            "pop_est": properties["pop_est"],
-            "subregion": properties["subregion"]
-        })
+        if "adm0_a3" in properties and "name" in properties and "pop_est" in properties and "subregion" in properties:
+            data.append({
+                "adm0_a3": properties["adm0_a3"],
+                "name": properties["name"],
+                "pop_est": properties["pop_est"],
+                "subregion": properties["subregion"]
+            })
 
-df = pd.DataFrame(data)
-exceptions = ["GRL", "ISL"]
+    df = pd.DataFrame(data)
+    exceptions = ["GRL", "ISL"]
 
-filtered_df = df[(df["pop_est"] >= 2000000) & (df["adm0_a3"] != "SLE") & (df["adm0_a3"] != "BDI") & (df["adm0_a3"] != "LSO") & (df["adm0_a3"] != "GAM")]
-filtered_df = filtered_df[filtered_df["subregion"].str.contains("Africa")]
+    filtered_df = df[(df["pop_est"] >= 2000000) & (df["adm0_a3"] != "SLE") & (df["adm0_a3"] != "BDI") & (df["adm0_a3"] != "LSO") & (df["adm0_a3"] != "GAM")]
+    filtered_df = filtered_df[filtered_df["subregion"].str.contains("Africa")]
 
 
-# GeoPandas file reading
-geojson_path = './src/datahub.geojson'
-world_data = gpd.read_file(geojson_path)
-filtered_world_data = world_data[world_data['ISO_A3'].isin(filtered_df['adm0_a3'])]
-filtered_world_data = pd.merge(
-    filtered_world_data,
-    filtered_df,
-    left_on='ISO_A3',
-    right_on='adm0_a3',
-    how='left'
-)
-
+    # GeoPandas file reading
+    geojson_path = './src/datahub.geojson'
+    world_data = gpd.read_file(geojson_path)
+    filtered_world_data = world_data[world_data['ISO_A3'].isin(filtered_df['adm0_a3'])]
+    filtered_world_data = pd.merge(
+        filtered_world_data,
+        filtered_df,
+        left_on='ISO_A3',
+        right_on='adm0_a3',
+        how='left'
+    )
+    return filtered_world_data
+filtered_world_data=getAfricaJsonData()
 ###########################################################################################
 # Start of ChatGPT generated/supported segment ######################################################
 def africa_geo_to_screen(lon, lat, width, height):
@@ -96,22 +97,25 @@ def africa_geo_to_screen(lon, lat, width, height):
 ###########################################################################################
 
 #Generate Shapes and Helper Functions
-country_shapes = {}
+def getCountryShapes():
+    country_shapes = {}
 
-for _, row in filtered_world_data.iterrows():
-    country_name = row['name']
-    geom = row['geometry']
-    if isinstance(geom, MultiPolygon):
-        polygons = list(geom.geoms)
-    else:
-        polygons = [geom]
+    for _, row in filtered_world_data.iterrows():
+        country_name = row['name']
+        geom = row['geometry']
+        if isinstance(geom, MultiPolygon):
+            polygons = list(geom.geoms)
+        else:
+            polygons = [geom]
 
-    screen_polygons = []
-    for polygon in polygons:
-        simplified_polygon = polygon.simplify(0.1) ###IMPORTANT FOR FASTER LOADING SPEED: simplify the higher float the more simple
-        screen_coords = [africa_geo_to_screen(x, y, 1200, 550) for x, y in simplified_polygon.exterior.coords]        
-        screen_polygons.append(screen_coords)
-        country_shapes[country_name] = screen_polygons
+        screen_polygons = []
+        for polygon in polygons:
+            simplified_polygon = polygon.simplify(0.1) ###IMPORTANT FOR FASTER LOADING SPEED: simplify the higher float the more simple
+            screen_coords = [africa_geo_to_screen(x, y, 1200, 550) for x, y in simplified_polygon.exterior.coords]        
+            screen_polygons.append(screen_coords)
+            country_shapes[country_name] = screen_polygons
+    return country_shapes
+country_shapes=getCountryShapes()
 
 def getPopulation(country_name):
     matching_country = filtered_world_data.loc[filtered_world_data['name'] == country_name]
@@ -424,14 +428,14 @@ class Country:
 class Player:
     
 
-    def __init__(self,startingCountries,color):
+    def __init__(self,startingCountries,color,name="Hans"):
         self.active=False
         self.owned= {key: 1 for key in startingCountries}
         self.color=color
         self.phases=['Reinforcement','Attack','Fortification']
         self.phaseIndex=0
         self.gamePhase=self.phases[self.phaseIndex]
-        self.name=input(f"Enter name for {self.color}:  ")
+        self.name=name
         self.reinforcements=3
 
          
@@ -502,15 +506,15 @@ class Game:
 
         starting2 = set(country_shapes.keys()).difference(starting1)
 
-        # players=start_screen.players
+        players=app.players
 
-        # app.player1 = Player(starting1, players[0]['color'], name=players[0]['name'])
+        app.player1 = Player(starting1, players[0]['color'], name=players[0]['name'])
 
-        # app.player2 = Player(starting2, players[1]['color'], name=players[1]['name'])
+        app.player2 = Player(starting2, players[1]['color'], name=players[1]['name'])
         
-        app.player1 = Player(starting1,'lightgreen')
+        # app.playe{{er(starting1,'lightgreen')
 
-        app.player2 = Player(starting2,'lightblue')
+        # app.player2 = Player(starting2,'lightblue')
 
         
         self.players = [app.player1, app.player2]
@@ -522,8 +526,7 @@ class Game:
 ###########################################################################################
 #Actual App Functions for MVC
 
-def game_onAppStart(app):
-
+def activate(app):
     app.background='mediumBlue'
     app.width=1200
     app.height=800
@@ -564,6 +567,11 @@ def game_onAppStart(app):
     app.bannerOpacity = 100  # Fully opaque
     app.bannerY = 325
     app.bannerAnimation = False
+
+def game_onScreenActivate(app):
+    activate(app)
+
+
     
     
     
@@ -780,7 +788,7 @@ def game_onMouseDrag(app, mouseX, mouseY, button):
             print(app.fortStart,app.fortEnd)
             print(f"onMouseDrag: {app.fortPath}")
             
-
+    
             
         
         
@@ -1107,8 +1115,3 @@ def game_onMouseMove(app, mouseX, mouseY):
 
 app.setMaxShapeCount(10000)
 
-def main():
-
-    runAppWithScreens(initialScreen="game")
-
-main()
