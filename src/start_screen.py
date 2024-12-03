@@ -257,14 +257,11 @@ subregion_boxes_dict=getSubregionBoxDict()
 def getSubregionCountries():
     sub_countries_dict = {}
     for subregion in subregion_boxes_dict:
-        subregion_countries_dict = {}
         countries_in_subregion = filtered_world_data[filtered_world_data['subregion'] == f'{subregion}']['name'].tolist()
         sub_countries_dict.update({str(subregion):countries_in_subregion})
 
 
     return sub_countries_dict
-sub_countries_dict=getSubregionCountries()
-
 
 def drawRisk(app):
     file_path='Images/risk.png'
@@ -339,6 +336,7 @@ def withinCountryinSub(app, mouseX, mouseY):
 #Actual App Functions for MVC
 
 def onAppStart(app):
+    app.background='lightCyan'
     app.width = 1200
     app.height = 800
     app.UIy = 550
@@ -474,6 +472,7 @@ def setup_onMousePress(app, mouseX, mouseY,button):
     if inButton(app,mouseX,mouseY,app.width//2-100, app.height//2+160, 200, 50) and app.players:
         activate(app)
         setActiveScreen('game')
+        game_onMouseMove(app, 0, 0)
     
     else:
         app.players = []

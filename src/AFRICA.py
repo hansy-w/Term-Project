@@ -247,13 +247,14 @@ def get_country_neighbors():
         
         if country_code in country_codes:
             country_neighbors[country_code] = neighbors
+        
+    country_neighbors['MOZ']=country_neighbors.get('MOZ')+['MDG']
+    country_neighbors['MDG']=country_neighbors.get('MDG')+['MOZ']
 
     return country_neighbors
 
 
 country_neighbors = get_country_neighbors()
-country_neighbors['MOZ']=country_neighbors.get('MOZ')+['MDG']
-country_neighbors['MDG']=country_neighbors.get('MDG')+['MOZ']
 
 
 country_code_to_name = {}
@@ -507,6 +508,7 @@ class Game:
         starting2 = set(country_shapes.keys()).difference(starting1)
 
         players=app.players
+        print(app.players)
 
         app.player1 = Player(starting1, players[0]['color'], name=players[0]['name'])
 
@@ -568,8 +570,8 @@ def activate(app):
     app.bannerY = 325
     app.bannerAnimation = False
 
-def game_onScreenActivate(app):
-    activate(app)
+# def game_onScreenActivate(app):
+#     activate(app)
 
 
     
@@ -829,7 +831,7 @@ def game_onMouseRelease(app, mouseX, mouseY, button):
     
 
 def game_onMousePress(app,mouseX,mouseY,button):
-     
+    print("ugasg")
     app.nearest_country = find_nearest_country(mouseX, mouseY, country_shapes, app)
     
     if mouseY<app.UIy:
@@ -1115,4 +1117,3 @@ def game_onMouseMove(app, mouseX, mouseY):
     
 
 app.setMaxShapeCount(10000)
-
