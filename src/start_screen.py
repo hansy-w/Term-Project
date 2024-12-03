@@ -463,6 +463,8 @@ def start_onMousePress(app,mouseX,mouseY,button):
     if app.startGame == 'black':
         setActiveScreen('setup')
 
+    
+
 
 
 

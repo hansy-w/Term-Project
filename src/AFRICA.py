@@ -662,6 +662,31 @@ def game_onKeyPress(app,key):
         #     removed_country=app.activePlayer.owned.popitem()
         #     if removed_country in country_shapes:
         #         app.players[1].owned[removed_country]=99
+    
+    elif key=='r':
+        app.background='lightCyan'
+        app.width = 1200
+        app.height = 800
+        app.UIy = 550
+        app.nearest_country = None
+        app.population = None
+        app.subregionsIn = []
+        app.countriesIn = []
+        app.selected_territory = None
+
+        app.startGame = 'gray'
+        app.howTo = 'gray'
+        app.riskOpacity=0
+        app.riskY=400
+        app.opacityStep = 10
+        app.yStep = 2
+        app.stepsPerSecond=40
+        
+
+        app.name=None
+        app.players=[]
+        setActiveScreen('setup')
+        
 
     
 
@@ -831,7 +856,6 @@ def game_onMouseRelease(app, mouseX, mouseY, button):
     
 
 def game_onMousePress(app,mouseX,mouseY,button):
-    print("ugasg")
     app.nearest_country = find_nearest_country(mouseX, mouseY, country_shapes, app)
     
     if mouseY<app.UIy:
