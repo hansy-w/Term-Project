@@ -943,6 +943,9 @@ def game_onMousePress(app,mouseX,mouseY,button):
                     elif button==3:
                         app.activePlayer.fortify(app.fortStart,app.fortEnd,app.fortNum)
                         app.message='You may continue attacking'
+                        app.fortNum=0
+                        app.fortStart=None
+                        app.fortEnd=None
                 
 
         if app.activePlayer.phases[app.activePlayer.phaseIndex]=='Fortification':
