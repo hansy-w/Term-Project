@@ -327,6 +327,7 @@ def withinCountryinSub(app, mouseX, mouseY):
 #Actual App Functions for MVC
 
 def onAppStart(app):
+    playSound(app,'https://archive.org/download/WiiSportsTheme/Wii%20Sports%20Theme.mp3')
     app.background='lightCyan'
     app.width = 1200
     app.height = 800

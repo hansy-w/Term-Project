@@ -443,17 +443,22 @@ class Player:
             app.fortStart=attacker
             app.fortEnd=defender
 
-            self.continentsOwned=self.get_continents_owned(Game.territories)
+            app.activePlayer.continentsOwned=app.activePlayer.get_continents_owned(Game.territories)
+            playSound(app,'https://www.myinstants.com/media/sounds/lichess-beep.mp3')
 
         
         else:
             app.message="ATTACK FAILED"
+            playSound(app,'https://www.myinstants.com/media/sounds/crowdaw.mp3')
             app.submessage=f"Attacker: {app.activePlayer.owned[app.attackCountry]} troops remaining, Defender: {app.defendPlayer.owned[defender]} troops remaining."
             
     def fortify(self,giver,receiver,num):
 
         self.owned[giver]-=num
         self.owned[receiver]+=num
+        playSound(app,"https://www.myinstants.com/media/sounds/fire-emblem-support-get.mp3")
+
+        
 
 
 
@@ -565,6 +570,11 @@ def activate(app):
     app.bannerOpacity = 100  # Fully opaque
     app.bannerY = 325
     app.bannerAnimation = False
+    app.sound.pause()
+    app.sound=Sound('https://terraria.wiki.gg/images/f/f3/Music-Town_Day.mp3')
+    app.sound.play(loop=True)
+    
+
 
 
     
@@ -715,6 +725,7 @@ def move_to_next_phase(app):
             app.bannerOpacity = 100
             app.bannerY = 325
             app.bannerAnimation = True
+            playSound(app,'https://www.myinstants.com/media/sounds/anvil-use-minecraft-sound-sound-effect-for-editing.mp3')
 
     elif app.activePlayer.phaseIndex==0:
         if app.activePlayer.reinforcements!=0:
@@ -722,6 +733,7 @@ def move_to_next_phase(app):
             app.submessage=''
 
         else:
+            playSound(app,'https://www.myinstants.com/media/sounds/combat-sword-swing-hit.mp3')
             app.activePlayer.phaseIndex+=1
             app.message="Click and drag to launch an Attack"
             app.submessage=''
@@ -861,6 +873,11 @@ def game_onMouseRelease(app, mouseX, mouseY, button):
     
 
 def game_onMousePress(app,mouseX,mouseY,button):
+    if set(app.activePlayer.owned)==set(countryShapes):
+                            app.sound.pause()
+                            app.message=f"{app.activePlayer} WINS"
+                            app.submessage='Press R to Restart'
+                            playSound(app,'https://www.myinstants.com/media/sounds/final-fantasy-vii-victory-fanfare-1.mp3')
     app.nearest_country = find_nearest_country(mouseX, mouseY, countryShapes, app)
     
     if mouseY<app.UIy:
@@ -929,6 +946,7 @@ def game_onMousePress(app,mouseX,mouseY,button):
                         app.activePlayer.attack(app.defendPlayer,app.attackCountry,app.defendCountry,app)
             
             else:
+                
                 if app.fortStart and app.fortEnd:
                     app.submessage=f'{app.fortStart} will give {app.fortNum} troops to {app.fortEnd}'
                     if button==0 and app.fortNum>0:
@@ -946,6 +964,7 @@ def game_onMousePress(app,mouseX,mouseY,button):
                         app.fortNum=0
                         app.fortStart=None
                         app.fortEnd=None
+            
                 
 
         if app.activePlayer.phases[app.activePlayer.phaseIndex]=='Fortification':
@@ -1144,9 +1163,6 @@ def drawPhaseUI(app):
 
 
 def game_onMouseMove(app, mouseX, mouseY):
-    if set(app.activePlayer.owned)==set(countryShapes):
-            app.message=f"{app.activePlayer} WINS"
-            app.submessage='Press R to Restart'
 
     if mouseY<app.UIy:
         withinSubregion(app,mouseX,mouseY)
@@ -1155,6 +1171,8 @@ def game_onMouseMove(app, mouseX, mouseY):
         app.population = getPopulation(app.nearest_country)
         app.neighbors=get_neighbors(countryName_to_code[app.nearest_country])
     
-    
+def playSound(app,url):
+    app.sound=Sound(url)
+    app.sound.play(restart=False)
 
 app.setMaxShapeCount(10000)
