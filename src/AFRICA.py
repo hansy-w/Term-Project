@@ -316,16 +316,20 @@ def blitz(attacker, defender):
     attacker_losses = 0
     defender_losses = 0
 
-    while attacker > 1 and defender > 0:
+    while attacker > 1 and defender > 0:  # basic requirements for attacking
         attacker_wins, defender_wins = rollBlitz(attacker, defender)
 
-        # Update total losses
-        attacker_losses += defender_wins
-        defender_losses += attacker_wins
+        #  defender loses one troop for each of the attacker's wins
+        defender_losses += defender_wins
+        attacker_losses += attacker_wins
+
+        attacker -= attacker_losses
+        defender -= defender_losses
+
 
     return attacker_losses, defender_losses
 
-def monteCarloBlitzSimulation(attacker_initial, defender_initial, simulations=100): #Add dice/troops on screen, 
+def monteCarloBlitzSimulation(attacker_initial, defender_initial, simulations=30000): #Add dice/troops on screen, 
     attacker_wins_total = 0
     defender_wins_total = 0
     
@@ -434,7 +438,11 @@ class Player:
             self.owned[defender]=1
             print(defender in self.owned)
             app.message="ATTACK SUCCESSFUL"
-            app.submessage=f"Select Troops to fortify new country"
+            app.submessage=f"Select Troops to fortify new country using buttons" 
+
+            app.fortStart=attacker
+            app.fortEnd=defender
+
             self.continentsOwned=self.get_continents_owned(Game.territories)
 
         
@@ -540,7 +548,6 @@ def activate(app):
     app.draggingLine = False
     app.lineStartLocation = None
     app.lineEndLocation = None
-    app.reinforce_from_attack=False
 
     app.fortStart=None
     app.fortEnd=None
@@ -694,6 +701,7 @@ def move_to_next_phase(app):
     app.fortStart=None
     app.fortEnd=None
     app.fortPath=None
+    app.fortNum=0
 
     if app.activePlayer.phaseIndex==2:
 
@@ -836,7 +844,7 @@ def game_onMouseRelease(app, mouseX, mouseY, button):
             defendTroops= app.defendPlayer.owned[app.defendCountry]
             app.message=f'Attacking rolls {attackerDice} dice, Defending rolls {defenderDice} Dice'
 
-            app.submessage='Result is decided by comparing the highest dice rolls. Defenders win ties'
+            app.submessage='Result  decided by comparing highest dice rolls. Defenders win ties'
         
             
 
@@ -909,37 +917,49 @@ def game_onMousePress(app,mouseX,mouseY,button):
                     app.submessage='Left Click to withdraw troops'
             
         if app.activePlayer.phases[app.activePlayer.phaseIndex]=='Attack':
-                
+            if app.message!='ATTACK SUCCESSFUL':
 
-            if button==2:
-                game_onMouseDrag(app,0,0,0)
-                
-            elif button==3:
-                if (app.attackCountry in app.activePlayer.owned and 
-                    app.defendCountry not in app.activePlayer.owned 
-                    and app.defendCountry): 
+                if button==2:
+                    game_onMouseDrag(app,0,0,0)
+                    
+                elif button==3:
+                    if (app.attackCountry in app.activePlayer.owned and 
+                        app.defendCountry not in app.activePlayer.owned 
+                        and app.defendCountry): 
+                            
                         
-                    
-                    app.activePlayer.attack(app.defendPlayer,app.attackCountry,app.defendCountry,app)
-                    if app.defendCountry in app.activePlayer.owned:
-                        app.reinforce_from_attack=True
-
-        if app.activePlayer.phases[app.activePlayer.phaseIndex]=='Fortification':
-            if app.fortStart and app.fortEnd:
-                
-                if button==0 and app.fortNum>0:
-                    app.fortNum-=1
-                
-                elif button==1 and app.activePlayer.owned[app.fortStart]>app.fortNum+1:
-                    app.fortNum+=1
-                    
+                        app.activePlayer.attack(app.defendPlayer,app.attackCountry,app.defendCountry,app)
+            
+            else:
                 if app.fortStart and app.fortEnd:
                     app.submessage=f'{app.fortStart} will give {app.fortNum} troops to {app.fortEnd}'
-
-                if button==3:
-                    if app.fortStart and app.fortEnd:
+                    if button==0 and app.fortNum>0:
+                        app.fortNum-=1
+                    
+                    elif button==1 and app.activePlayer.owned[app.fortStart]>app.fortNum+1:
+                        app.fortNum+=1
+                    
+                    elif button==2:
+                        app.message=='You may continue attacking'
+                        
+                    elif button==3:
                         app.activePlayer.fortify(app.fortStart,app.fortEnd,app.fortNum)
-                        move_to_next_phase(app)
+                        app.message=='You may continue attacking'
+                
+
+            if app.activePlayer.phases[app.activePlayer.phaseIndex]=='Fortification':
+                if app.fortStart and app.fortEnd:
+                    app.submessage=f'{app.fortStart} will give {app.fortNum} troops to {app.fortEnd}'
+                    
+                    if button==0 and app.fortNum>0:
+                        app.fortNum-=1
+                    
+                    elif button==1 and app.activePlayer.owned[app.fortStart]>app.fortNum+1:
+                        app.fortNum+=1
+
+                    elif button==3:
+                            app.activePlayer.fortify(app.fortStart,app.fortEnd,app.fortNum)
+                            move_to_next_phase(app)
 
                           
 
@@ -1071,8 +1091,14 @@ def drawReinforcement(app):
         
         
 def drawAttack(app):
+
+    if app.message=="ATTACK SUCCESSFUL":
+        drawLabel(f'Fortify Start: {app.fortStart}',
+                  800, 280, size=16, bold=True, fill=app.activePlayer.color)
+        drawLabel(f'Fortify End: {app.fortEnd}',
+                  800, 320, size=16, bold=True, fill=app.activePlayer.color)
     
-    if app.lineStartLocation != None and app.lineEndLocation != None:
+    elif app.lineStartLocation != None and app.lineEndLocation != None:
         drawLabel(f'Attacking Country: {app.attackCountry}',
                   800, 280, size=16, bold=True, fill=app.activePlayer.color)
         drawLabel(f'Defending Country: {app.defendCountry}',
@@ -1087,9 +1113,9 @@ def drawAttack(app):
             800, 440, size=16, bold=True, fill=app.activePlayer.color)
     
     
-    if app.attackCountry in app.activePlayer.owned and app.defendCountry in app.activePlayer.owned:
-        x1,y1=get_center(country_shapes[app.attackCountry])
-        x2,y2=get_center(country_shapes[app.defendCountry])
+    if app.message=="ATTACK SUCCESSFUL":
+        x1,y1=get_center(country_shapes[app.fortStart])
+        x2,y2=get_center(country_shapes[app.fortEnd])
         drawLine(x1, y1, x2, y2, lineWidth=2, fill='black',dashes=True)
 
         

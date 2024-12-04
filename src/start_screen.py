@@ -485,9 +485,10 @@ def setup_onMousePress(app, mouseX, mouseY,button):
 
 def checkValid(app):
     names = {player['name'] for player in app.players}
-    if len(names) < len(app.players):
-        app.showMessage('Duplicate names detected. Please enter a different name.')
+    if len(names) < len(app.players) or "Unknown" in names:
+        app.showMessage('Invalid names detected. Please enter a different name.')
         return False
+    
     return True
          
 
