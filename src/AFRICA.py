@@ -938,11 +938,11 @@ def game_onMousePress(app,mouseX,mouseY,button):
                         app.fortNum+=1
                     
                     elif button==2:
-                        app.message=='You may continue attacking'
+                        app.message='You may continue attacking'
                         
                     elif button==3:
                         app.activePlayer.fortify(app.fortStart,app.fortEnd,app.fortNum)
-                        app.message=='You may continue attacking'
+                        app.message='You may continue attacking'
                 
 
         if app.activePlayer.phases[app.activePlayer.phaseIndex]=='Fortification':
