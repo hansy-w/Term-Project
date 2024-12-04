@@ -98,27 +98,27 @@ def africa_geo_to_screen(lon, lat, width, height):
 
 #Generate Shapes and Helper Functions
 def getCountryShapes():
-    country_shapes = {}
+    countryShapes = {}
 
     for _, row in filtered_world_data.iterrows():
-        country_name = row['name']
+        countryName = row['name']
         geom = row['geometry']
         if isinstance(geom, MultiPolygon):
             polygons = list(geom.geoms)
         else:
             polygons = [geom]
 
-        screen_polygons = []
+        screenPolygon = []
         for polygon in polygons:
             simplified_polygon = polygon.simplify(0.1) ###IMPORTANT FOR FASTER LOADING SPEED: simplify the higher float the more simple
             screen_coords = [africa_geo_to_screen(x, y, 1200, 550) for x, y in simplified_polygon.exterior.coords]        
-            screen_polygons.append(screen_coords)
-            country_shapes[country_name] = screen_polygons
-    return country_shapes
-country_shapes=getCountryShapes()
+            screenPolygon.append(screen_coords)
+            countryShapes[countryName] = screenPolygon
+    return countryShapes
+countryShapes=getCountryShapes()
 
-def getPopulation(country_name):
-    matching_country = filtered_world_data.loc[filtered_world_data['name'] == country_name]
+def getPopulation(countryName):
+    matching_country = filtered_world_data.loc[filtered_world_data['name'] == countryName]
     if not matching_country.empty:
         return int(matching_country['pop_est'].values[0])
     else:
@@ -126,7 +126,7 @@ def getPopulation(country_name):
 
 def getCountryBox(name): #Iterates through countries' polygon coordinates, finds lowest and highest x and y respectively
 
-    name_polygons = country_shapes[name]
+    namePolygon = countryShapes[name]
     leftTop = [float('inf'), float('inf')]
     rightBot = [0, 0]
 
@@ -135,7 +135,7 @@ def getCountryBox(name): #Iterates through countries' polygon coordinates, finds
     right=rightBot[0]
     bot=rightBot[1]
 
-    for polygon in name_polygons:
+    for polygon in namePolygon:
         for x, y in polygon:
             if x < leftTop[0]:
                 leftTop[0] = x
@@ -158,12 +158,12 @@ def getSubregionBoxDict():
         rightBot = [0, 0]
 
         for _, row in filtered_world_data[filtered_world_data['subregion'] == subregion].iterrows():
-            country_name = row['name']
-            if country_name in country_shapes.keys():
+            countryName = row['name']
+            if countryName in countryShapes.keys():
 
-                name_polygons = country_shapes[country_name]
+                namePolygon = countryShapes[countryName]
 
-                for polygon in name_polygons:
+                for polygon in namePolygon:
                     for x, y in polygon:
 
                         if x < leftTop[0]:
@@ -194,8 +194,8 @@ sub_countries_dict=getSubregionCountries()
 
 
 def drawCountry(name):
-    name_polygons = country_shapes[name]
-    for polygon in name_polygons:
+    namePolygon = countryShapes[name]
+    for polygon in namePolygon:
         L=[]
         for x, y in polygon:
             L += [x] + [y]
@@ -203,7 +203,7 @@ def drawCountry(name):
     drawPolygon(*L,fill='lightGray', border='Black', borderWidth=1,
              opacity=100, rotateAngle=0, dashes=False, visible=True)
 
-def find_nearest_country(mouse_x, mouse_y, country_shapes, app):
+def find_nearest_country(mouse_x, mouse_y, countryShapes, app):
     click_point = Point(mouse_x, mouse_y)
 
     nearest_country = None
@@ -212,17 +212,17 @@ def find_nearest_country(mouse_x, mouse_y, country_shapes, app):
     if not app.countriesIn:
         return None
 
-    for country_name in app.countriesIn:
-        if country_name in country_shapes:
-            for screen_polygon in country_shapes[country_name]:
-                shapely_polygon = Polygon(screen_polygon)
+    for countryName in app.countriesIn:
+        if countryName in countryShapes:
+            for screen_polygon in countryShapes[countryName]:
+                shapelyPolygon = Polygon(screen_polygon)
 
-                if shapely_polygon.contains(click_point):
-                    return country_name
+                if shapelyPolygon.contains(click_point):
+                    return countryName
 
     return nearest_country
 
-country_codes = set(filtered_world_data['adm0_a3'])
+countryCodes = set(filtered_world_data['adm0_a3'])
 
 def get_country_neighbors():
     response = requests.get("https://restcountries.com/v3.1/all?fields=cca3,borders")
@@ -235,13 +235,13 @@ def get_country_neighbors():
     
     for country in countries_data:
                 
-        country_code = country.get("cca3")
+        countryCode = country.get("cca3")
             
         neighbors = list(country.get("borders", [])) 
         
         
-        if country_code in country_codes:
-            country_neighbors[country_code] = neighbors
+        if countryCode in countryCodes:
+            country_neighbors[countryCode] = neighbors
         
     country_neighbors['MOZ']=country_neighbors.get('MOZ')+['MDG']
     country_neighbors['MDG']=country_neighbors.get('MDG')+['MOZ']
@@ -252,33 +252,33 @@ country_neighbors = get_country_neighbors()
 
 def getCodeNameConversions():
 
-    country_code_to_name = {}
-    country_code_to_name[None]=None
+    countryCode_to_name = {}
+    countryCode_to_name[None]=None
 
-    country_name_to_code = {}
-    country_name_to_code[None]=None
+    countryName_to_code = {}
+    countryName_to_code[None]=None
 
     for _, row in filtered_world_data.iterrows():
-        country_code = row['adm0_a3']
-        country_name = row['name']
+        countryCode = row['adm0_a3']
+        countryName = row['name']
 
-        country_code_to_name[country_code]=country_name
-        country_name_to_code[country_name]=country_code
+        countryCode_to_name[countryCode]=countryName
+        countryName_to_code[countryName]=countryCode
     
-    return country_code_to_name, country_name_to_code
+    return countryCode_to_name, countryName_to_code
 
-country_code_to_name, country_name_to_code = getCodeNameConversions()
+countryCode_to_name, countryName_to_code = getCodeNameConversions()
 
 
 
-def get_neighbors(country_code):
-    return country_neighbors.get(country_code, [])
+def get_neighbors(countryCode):
+    return country_neighbors.get(countryCode, [])
 
-def get_center(name_polygons):
+def getCenter(namePolygon):
     x_coords = []
     y_coords = []
     
-    for polygon in name_polygons:
+    for polygon in namePolygon:
         for x, y in polygon:
             x_coords.append(x)
             y_coords.append(y)
@@ -367,16 +367,16 @@ def withinCountryinSub(app, mouseX, mouseY):
     SubDict = getSubregionCountries()
     for subregion in app.subregionsIn:
 
-        for country_name in SubDict[subregion]:
-            if country_name in country_shapes.keys():
+        for countryName in SubDict[subregion]:
+            if countryName in countryShapes.keys():
 
-                leftTop, rightBot = getCountryBox(country_name)
+                leftTop, rightBot = getCountryBox(countryName)
 
                 leftX, leftY = leftTop
                 rightX, rightY = rightBot
 
                 if leftX <= mouseX <= rightX and leftY <= mouseY <= rightY:
-                    app.countriesIn.append(country_name)
+                    app.countriesIn.append(countryName)
 
 def distance(x0,y0,x1,y1):
     return ((x1-x0)**2+(y1-y0)**2)**0.5
@@ -385,8 +385,8 @@ def distance(x0,y0,x1,y1):
 class Country:
     def __init__(self,name):
         self.name=name
-        self.polygons=country_shapes[self.name]
-        self.code=country_name_to_code[self.name]
+        self.polygons=countryShapes[self.name]
+        self.code=countryName_to_code[self.name]
         for player in app.players:
             if self.name in app.players.owned:
                 self.owner=player
@@ -467,8 +467,8 @@ class Player:
         
 
 class Game:
-    def get_random_country_groups(country_shapes):
-        country_list = list(country_shapes.keys())
+    def get_random_country_groups(countryShapes):
+        country_list = list(countryShapes.keys())
         random.shuffle(country_list) 
 
         half_count = len(country_list) // 2  
@@ -504,9 +504,9 @@ class Game:
 
     def start(self,app):
         
-        starting1 = set(Game.get_random_country_groups(country_shapes))
+        starting1 = set(Game.get_random_country_groups(countryShapes))
 
-        starting2 = set(country_shapes.keys()).difference(starting1)
+        starting2 = set(countryShapes.keys()).difference(starting1)
 
         players=app.players
         print(app.players)
@@ -576,11 +576,11 @@ def activate(app):
 
 
 def drawCountries(app):
-    for country_name in list(country_shapes.keys()):
-        name_polygons = country_shapes[country_name]
+    for countryName in list(countryShapes.keys()):
+        namePolygon = countryShapes[countryName]
         
 
-        for polygon in name_polygons:
+        for polygon in namePolygon:
             L=[]
             for x, y in polygon:
                 L += (x,y)
@@ -590,7 +590,7 @@ def drawCountries(app):
 
                 region = None
                 for region_id, countries in Game.territories.items():
-                    if country_name_to_code[country_name] in countries:
+                    if countryName_to_code[countryName] in countries:
                         region = region_id
                         break
                 
@@ -603,23 +603,23 @@ def drawCountries(app):
 
 
             else:       
-                if (country_name_to_code[country_name] in app.neighbors 
+                if (countryName_to_code[countryName] in app.neighbors 
                       and app.nearest_country in app.activePlayer.owned 
-                      and country_name not in app.activePlayer.owned 
+                      and countryName not in app.activePlayer.owned 
                       and app.activePlayer.phases[app.activePlayer.phaseIndex]=='Attack'):
                     color='red'
                 else:
-                    if country_name in app.player1.owned:
+                    if countryName in app.player1.owned:
                         color=app.player1.color
                     
-                    elif country_name in app.player2.owned:
+                    elif countryName in app.player2.owned:
                         color=app.player2.color
                 
                 
             drawPolygon(*L,fill=color, border='Black', borderWidth=1,
                 opacity=100, rotateAngle=0, dashes=False, visible=True)
 
-            if country_name==app.nearest_country or country_name==app.reinforceCountry or country_name==app.attackCountry or country_name==app.fortStart:
+            if countryName==app.nearest_country or countryName==app.reinforceCountry or countryName==app.attackCountry or countryName==app.fortStart:
                     drawPolygon(*L,fill='black', border=None, borderWidth=1,
                 opacity=60, rotateAngle=0, dashes=False, visible=True)
         
@@ -627,16 +627,16 @@ def drawCountries(app):
     
     circleCenter=[]
     if not app.tView:
-        for country_name in list(country_shapes.keys()):
-            name_polygons = country_shapes[country_name]
-            x,y=get_center(name_polygons)
+        for countryName in list(countryShapes.keys()):
+            namePolygon = countryShapes[countryName]
+            x,y=getCenter(namePolygon)
             circleCenter.append((x,y))
-            if country_name in app.player1.owned:
+            if countryName in app.player1.owned:
                 drawCircle(x,y,10,fill="green")
-                drawLabel(f'{app.player1.owned[country_name]}',x,y,size=18,bold=True)
+                drawLabel(f'{app.player1.owned[countryName]}',x,y,size=18,bold=True)
             else:
                 drawCircle(x,y,10,fill="aqua")
-                drawLabel(f'{app.player2.owned[country_name]}',x,y,size=18,bold=True)
+                drawLabel(f'{app.player2.owned[countryName]}',x,y,size=18,bold=True)
 
 
 
@@ -650,11 +650,11 @@ def game_onKeyPress(app,key):
         move_to_next_phase(app)
 
     elif key=='w':
-        app.activePlayer.owned={key: 1 for key in country_shapes}
+        app.activePlayer.owned={key: 1 for key in countryShapes}
 
         # while len(app.activePlayer.owned)!=1:
         #     removed_country=app.activePlayer.owned.popitem()
-        #     if removed_country in country_shapes:
+        #     if removed_country in countryShapes:
         #         app.players[1].owned[removed_country]=99
     
     elif key=='r':
@@ -750,12 +750,12 @@ def pathSolver(startCountry, endCountry, playerOwned, visited=None):
     visited.add(startCountry)
 
     # Iterate through countries
-    for neighbor in country_neighbors.get(country_name_to_code[startCountry], []):
+    for neighbor in country_neighbors.get(countryName_to_code[startCountry], []):
         
-        print(country_code_to_name)
-        if neighbor not in country_code_to_name:
+        print(countryCode_to_name)
+        if neighbor not in countryCode_to_name:
             continue
-        neighbor=country_code_to_name[neighbor]
+        neighbor=countryCode_to_name[neighbor]
         print(f'pathSolver is Running~!!!   {neighbor}')
         # ifLegal: Only consider neighbors owned by the same player and not yet visited
         if neighbor in playerOwned and neighbor not in visited:
@@ -780,7 +780,7 @@ def pathFinder(app,startCountry, endCountry):
         else:
             coordPath=[]
             for country in countryPath:
-                coordPath.append(get_center(country_shapes[country]))
+                coordPath.append(getCenter(countryShapes[country]))
             print(f"pathFinder: {coordPath}")
             app.message="Fortification Path Found!"
             app.submessage=''
@@ -794,13 +794,13 @@ def game_onMouseDrag(app, mouseX, mouseY, button):
             app.lineEndLocation = (mouseX, mouseY)
             withinSubregion(app,mouseX,mouseY)
             withinCountryinSub(app,mouseX,mouseY)
-            app.defendCountry = find_nearest_country(mouseX, mouseY, country_shapes, app)
+            app.defendCountry = find_nearest_country(mouseX, mouseY, countryShapes, app)
 
         elif app.activePlayer.phases[app.activePlayer.phaseIndex]=='Fortification':
 
             withinSubregion(app,mouseX,mouseY)
             withinCountryinSub(app,mouseX,mouseY)
-            app.fortEnd = find_nearest_country(mouseX, mouseY, country_shapes, app)
+            app.fortEnd = find_nearest_country(mouseX, mouseY, countryShapes, app)
 
             app.fortPath = pathFinder(app,app.fortStart,app.fortEnd)
             
@@ -822,9 +822,9 @@ def game_onMouseRelease(app, mouseX, mouseY, button):
 
     
     if app.activePlayer.phases[app.activePlayer.phaseIndex]=='Attack':
-        app.defendCountry = find_nearest_country(mouseX, mouseY, country_shapes, app)
+        app.defendCountry = find_nearest_country(mouseX, mouseY, countryShapes, app)
 
-        if country_name_to_code[app.defendCountry] not in get_neighbors(country_name_to_code[app.attackCountry]):        
+        if countryName_to_code[app.defendCountry] not in get_neighbors(countryName_to_code[app.attackCountry]):        
             app.defendCountry=None 
             return None
         
@@ -854,14 +854,14 @@ def game_onMouseRelease(app, mouseX, mouseY, button):
             app.submessage=''
         
     elif app.activePlayer.phases[app.activePlayer.phaseIndex]=='Reinforcement':
-        app.fortEnd=find_nearest_country(mouseX, mouseY, country_shapes, app)
+        app.fortEnd=find_nearest_country(mouseX, mouseY, countryShapes, app)
         if app.fortStart and app.fortEnd:
                 app.submessage=f'{app.fortStart} will give {app.fortNum} troops to {app.fortEnd}'
 
     
 
 def game_onMousePress(app,mouseX,mouseY,button):
-    app.nearest_country = find_nearest_country(mouseX, mouseY, country_shapes, app)
+    app.nearest_country = find_nearest_country(mouseX, mouseY, countryShapes, app)
     
     if mouseY<app.UIy:
         if app.activePlayer.phases[app.activePlayer.phaseIndex]=='Reinforcement':
@@ -1019,14 +1019,10 @@ def pickButton(app, mouseX, mouseY):
     return None
 
 def drawUI(app):
-    # drawRect(0,app.UIy,app.width,app.height-app.UIy,fill='linen')
 
     drawImages(app)
     drawPlayers(app)
     drawLabel("Press the spacebar to skip phases",325,730,size=30)
-
-    # drawRect(50,630,100,100,fill='gray') #Attack Button 
-
 
     gap=50
     for i in range(4):
@@ -1050,9 +1046,6 @@ def drawUI(app):
 def CMU_imaging(file_path):
     image=Image.open(file_path)
     imageWidth, imageHeight = image.size
-
-    
-
     
     return CMUImage(image)
 
@@ -1112,8 +1105,8 @@ def drawAttack(app):
     
     
     if app.message=="ATTACK SUCCESSFUL":
-        x1,y1=get_center(country_shapes[app.fortStart])
-        x2,y2=get_center(country_shapes[app.fortEnd])
+        x1,y1=getCenter(countryShapes[app.fortStart])
+        x2,y2=getCenter(countryShapes[app.fortEnd])
         drawLine(x1, y1, x2, y2, lineWidth=2, fill='black',dashes=True)
 
         
@@ -1148,16 +1141,16 @@ def drawPhaseUI(app):
 
 
 def game_onMouseMove(app, mouseX, mouseY):
-    if set(app.activePlayer.owned)==set(country_shapes):
+    if set(app.activePlayer.owned)==set(countryShapes):
             app.message=f"{app.activePlayer} WINS"
             app.submessage='Press R to Restart'
 
     if mouseY<app.UIy:
         withinSubregion(app,mouseX,mouseY)
         withinCountryinSub(app,mouseX,mouseY)
-        app.nearest_country = find_nearest_country(mouseX, mouseY, country_shapes, app)
+        app.nearest_country = find_nearest_country(mouseX, mouseY, countryShapes, app)
         app.population = getPopulation(app.nearest_country)
-        app.neighbors=get_neighbors(country_name_to_code[app.nearest_country])
+        app.neighbors=get_neighbors(countryName_to_code[app.nearest_country])
     
     
 
