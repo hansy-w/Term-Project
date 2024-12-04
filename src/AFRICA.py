@@ -381,13 +381,6 @@ def withinCountryinSub(app, mouseX, mouseY):
 def distance(x0,y0,x1,y1):
     return ((x1-x0)**2+(y1-y0)**2)**0.5
 
-def get_random_half_countries(country_shapes):
-    country_list = list(country_shapes.keys())
-    random.shuffle(country_list) 
-
-    half_count = len(country_list) // 2  
-    return country_list[:half_count]
-
 
 class Country:
     def __init__(self,name):
@@ -470,13 +463,19 @@ class Player:
         
 
 class Game:
-    territories={1: {'EGY', 'LBY', 'TUN', 'DZA', 'MAR', 'SDN'},  # North Africa
-    2: {'CIV', 'BEN', 'TGO', 'GHA', 'SEN', 'NGA', 'GMB', 'MLI', 'BFA', 'NER', 'GNB', 'GHA', 'MRT'},  # West Africa
-    3: {'CAM', 'GAB', 'CAF', 'COD','GAB', 'COG','CMR'},  # Central Africa
+    def get_random_half_countries(country_shapes):
+        country_list = list(country_shapes.keys())
+        random.shuffle(country_list) 
+
+        half_count = len(country_list) // 2  
+        return country_list[:half_count]
+    
+    territories={1: {'EGY', 'LBY', 'TUN', 'DZA', 'MAR', 'SDN','NER','TCD'},  # North Africa
+    2: {'CIV', 'BEN', 'TGO', 'GHA', 'SEN', 'NGA', 'MLI', 'BFA', 'MRT','GIN','LBR'},  # West Africa
+    3: {'CAM', 'CAF', 'COD','GAB', 'COG','CMR'},  # Central Africa
     4: {'ETH', 'KEN', 'TZA', 'SOM', 'UGA', 'RWA', 'ERI', 'SSD'},  # East Africa
     5: {'ZAF', 'BWA', 'NAM', 'ZWE', 'AGO'},  # Southern Africa
-    6: {'MDG'},  # Island Countries
-    7: {'MOZ', 'LBR', 'ZMB','MWI'},  # Central and Southern Regions
+    6: {'MOZ','MDG', 'ZMB','MWI'},  # Central and Southern Regions
              }
 
     regionColors = {
@@ -485,8 +484,7 @@ class Game:
         3: "lightYellow",  # Central Africa
         4: "lightCoral",   # East Africa
         5: "lightPink",    # Southern Africa
-        6: "black",  # Horn of Africa
-        7: "red",  # Great Lakes Region
+        6: "red",  # Great Lakes Region
     }
 
     continentBonus={
@@ -496,14 +494,13 @@ class Game:
     4:3,
     5:3,
     6:3,
-    7:3,
 }
     def __init__(self,app):
         self.players=[]
 
     def start(self,app):
         
-        starting1 = set(get_random_half_countries(country_shapes))
+        starting1 = set(Game.get_random_half_countries(country_shapes))
 
         starting2 = set(country_shapes.keys()).difference(starting1)
 
@@ -569,9 +566,6 @@ def activate(app):
     app.bannerOpacity = 100  # Fully opaque
     app.bannerY = 325
     app.bannerAnimation = False
-
-# def game_onScreenActivate(app):
-#     activate(app)
 
 
     
