@@ -456,7 +456,8 @@ class Player:
 
         self.owned[giver]-=num
         self.owned[receiver]+=num
-        playSound(app,"https://www.myinstants.com/media/sounds/fire-emblem-support-get.mp3")
+        if num>0:
+            playSound(app,"https://www.myinstants.com/media/sounds/fire-emblem-support-get.mp3")
 
         
 
