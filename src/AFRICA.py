@@ -316,20 +316,16 @@ def blitz(attacker, defender):
     attacker_losses = 0
     defender_losses = 0
 
-    while attacker > 1 and defender > 0:  # basic requirements for attacking
+    while attacker > 1 and defender > 0:
         attacker_wins, defender_wins = rollBlitz(attacker, defender)
 
-        #  defender loses one troop for each of the attacker's wins
-        defender_losses += defender_wins
-        attacker_losses += attacker_wins
-
-        attacker -= attacker_losses
-        defender -= defender_losses
-
+        # Update total losses
+        attacker_losses += defender_wins
+        defender_losses += attacker_wins
 
     return attacker_losses, defender_losses
 
-def monteCarloBlitzSimulation(attacker_initial, defender_initial, simulations=30000): #Add dice/troops on screen, 
+def monteCarloBlitzSimulation(attacker_initial, defender_initial, simulations=10000): #Add dice/troops on screen, 
     attacker_wins_total = 0
     defender_wins_total = 0
     
@@ -831,7 +827,17 @@ def game_onMouseRelease(app, mouseX, mouseY, button):
             
         if app.attackCountry in app.activePlayer.owned and app.defendCountry not in app.activePlayer.owned:
             app.probability=monteCarloBlitzSimulation(app.activePlayer.owned[app.attackCountry],app.defendPlayer.owned[app.defendCountry])
+            attackTroops= app.activePlayer.owned[app.attackCountry]
+            defendTroops= app.defendPlayer.owned[app.defendCountry]
+            attackerDice = min(attackTroops - 1, 3) if attackTroops > 1 else 0
+            defenderDice = min(defendTroops, 2) if defendTroops > 0 else 0
+    
             
+            defendTroops= app.defendPlayer.owned[app.defendCountry]
+            app.message=f'Attacking rolls {attackerDice} dice, Defending rolls {defenderDice} Dice'
+
+            app.submessage='Result is decided by comparing the highest dice rolls. Defenders win ties'
+        
             
 
         else:
