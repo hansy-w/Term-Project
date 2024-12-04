@@ -277,7 +277,6 @@ def find_nearest_country(mouse_x, mouse_y, country_shapes, app):
     click_point = Point(mouse_x, mouse_y)
 
     nearest_country = None
-    min_distance = 0
 
     if not app.countriesIn:
         return None
@@ -289,12 +288,7 @@ def find_nearest_country(mouse_x, mouse_y, country_shapes, app):
 
                 if shapely_polygon.contains(click_point):
                     return country_name
-
-                distance = shapely_polygon.distance(click_point)
-                if distance < min_distance:
-                    min_distance = distance
-                    nearest_country = country_name
-
+ 
     return nearest_country
 ###########################################################################################
 #Helper Functions for MVC

@@ -220,11 +220,6 @@ def find_nearest_country(mouse_x, mouse_y, country_shapes, app):
                 if shapely_polygon.contains(click_point):
                     return country_name
 
-                distance = shapely_polygon.distance(click_point)
-                if distance < min_distance:
-                    min_distance = distance
-                    nearest_country = country_name
-
     return nearest_country
 
 country_codes = set(filtered_world_data['adm0_a3'])
@@ -253,22 +248,27 @@ def get_country_neighbors():
 
     return country_neighbors
 
-
 country_neighbors = get_country_neighbors()
 
+def getCodeNameConversions():
 
-country_code_to_name = {}
-country_code_to_name[None]=None
+    country_code_to_name = {}
+    country_code_to_name[None]=None
 
-country_name_to_code = {}
-country_name_to_code[None]=None
+    country_name_to_code = {}
+    country_name_to_code[None]=None
 
-for _, row in filtered_world_data.iterrows():
-    country_code = row['adm0_a3']
-    country_name = row['name']
+    for _, row in filtered_world_data.iterrows():
+        country_code = row['adm0_a3']
+        country_name = row['name']
 
-    country_code_to_name[country_code]=country_name
-    country_name_to_code[country_name]=country_code
+        country_code_to_name[country_code]=country_name
+        country_name_to_code[country_name]=country_code
+    
+    return country_code_to_name, country_name_to_code
+
+country_code_to_name, country_name_to_code = getCodeNameConversions()
+
 
 
 def get_neighbors(country_code):
@@ -291,34 +291,6 @@ def get_center(name_polygons):
 
 ###########################################################################################
 #Helper Functions for MVC
-territories={1: {'EGY', 'LBY', 'TUN', 'DZA', 'MAR', 'SDN'},  # North Africa
-    2: {'CIV', 'BEN', 'TGO', 'GHA', 'SEN', 'NGA', 'GMB', 'MLI', 'BFA', 'NER', 'GNB', 'GHA', 'MRT'},  # West Africa
-    3: {'CAM', 'GAB', 'CAF', 'COD','GAB', 'COG','CMR'},  # Central Africa
-    4: {'ETH', 'KEN', 'TZA', 'SOM', 'UGA', 'RWA', 'ERI', 'SSD'},  # East Africa
-    5: {'ZAF', 'BWA', 'NAM', 'ZWE', 'AGO'},  # Southern Africa
-    6: {'MDG'},  # Island Countries
-    7: {'MOZ', 'LBR', 'ZMB','MWI'},  # Central and Southern Regions
-             }
-
-region_colors = {
-        1: "lightBlue",  # North Africa
-        2: "lightGreen",  # West Africa
-        3: "lightYellow",  # Central Africa
-        4: "lightCoral",   # East Africa
-        5: "lightPink",    # Southern Africa
-        6: "black",  # Horn of Africa
-        7: "red",  # Great Lakes Region
-    }
-
-continent_bonus={
-    1:3,
-    2:3,
-    3:3,
-    4:3,
-    5:3,
-    6:3,
-    7:3,
-}
 
 def rollDie():
     return random.randint(1, 6)
@@ -357,7 +329,7 @@ def blitz(attacker, defender):
 
     return attacker_losses, defender_losses
 
-def monteCarloBlitzSimulation(attacker_initial, defender_initial, simulations=30000):
+def monteCarloBlitzSimulation(attacker_initial, defender_initial, simulations=30000): #Add dice/troops on screen, 
     attacker_wins_total = 0
     defender_wins_total = 0
     
@@ -440,7 +412,7 @@ class Player:
         self.reinforcements=3
 
          
-        self.continentsOwned=self.get_continents_owned(territories)
+        self.continentsOwned=self.get_continents_owned(Game.territories)
     
     def __repr__(self):
         return f"{self.name}"
@@ -456,7 +428,7 @@ class Player:
         num_territories= len(self.owned)
         base = max(num_territories // 3, 3)  # Minimum 3 reinforcements
 
-        bonus = sum(continent_bonus[continent] for continent in self.continentsOwned)
+        bonus = sum(Game.continentBonus[continent] for continent in self.continentsOwned)
 
         total = base + bonus
         app.message = f"{total} Reinforcements Received for {len(self.owned)} countries and {len(self.continentsOwned)} Regions"
@@ -474,7 +446,7 @@ class Player:
             print(defender in self.owned)
             app.message="ATTACK SUCCESSFUL"
             app.submessage=f"Select Troops to fortify new country"
-            self.continentsOwned=self.get_continents_owned(territories)
+            self.continentsOwned=self.get_continents_owned(Game.territories)
 
         
         else:
@@ -498,6 +470,34 @@ class Player:
         
 
 class Game:
+    territories={1: {'EGY', 'LBY', 'TUN', 'DZA', 'MAR', 'SDN'},  # North Africa
+    2: {'CIV', 'BEN', 'TGO', 'GHA', 'SEN', 'NGA', 'GMB', 'MLI', 'BFA', 'NER', 'GNB', 'GHA', 'MRT'},  # West Africa
+    3: {'CAM', 'GAB', 'CAF', 'COD','GAB', 'COG','CMR'},  # Central Africa
+    4: {'ETH', 'KEN', 'TZA', 'SOM', 'UGA', 'RWA', 'ERI', 'SSD'},  # East Africa
+    5: {'ZAF', 'BWA', 'NAM', 'ZWE', 'AGO'},  # Southern Africa
+    6: {'MDG'},  # Island Countries
+    7: {'MOZ', 'LBR', 'ZMB','MWI'},  # Central and Southern Regions
+             }
+
+    regionColors = {
+        1: "lightBlue",  # North Africa
+        2: "lightGreen",  # West Africa
+        3: "lightYellow",  # Central Africa
+        4: "lightCoral",   # East Africa
+        5: "lightPink",    # Southern Africa
+        6: "black",  # Horn of Africa
+        7: "red",  # Great Lakes Region
+    }
+
+    continentBonus={
+    1:3,
+    2:3,
+    3:3,
+    4:3,
+    5:3,
+    6:3,
+    7:3,
+}
     def __init__(self,app):
         self.players=[]
 
@@ -596,14 +596,14 @@ def drawCountries(app):
             if app.tView:
 
                 region = None
-                for region_id, countries in territories.items():
+                for region_id, countries in Game.territories.items():
                     if country_name_to_code[country_name] in countries:
                         region = region_id
                         break
                 
                 # If a region is found, color the country accordingly
                 if region is not None:
-                    color = region_colors.get(region, "lightGray")
+                    color = Game.regionColors.get(region, "lightGray")
                 else:
                     color = "lightGray"  # Default color if no region is found
                         
@@ -623,7 +623,7 @@ def drawCountries(app):
                         color=app.player2.color
                 
                 
-                drawPolygon(*L,fill=color, border='Black', borderWidth=1,
+            drawPolygon(*L,fill=color, border='Black', borderWidth=1,
                 opacity=100, rotateAngle=0, dashes=False, visible=True)
 
             if country_name==app.nearest_country or country_name==app.reinforceCountry or country_name==app.attackCountry or country_name==app.fortStart:
