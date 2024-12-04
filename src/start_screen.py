@@ -351,6 +351,7 @@ def onAppStart(app):
 
     app.name=None
     app.players=[]
+    app.valid=False
     
 
     
@@ -466,25 +467,28 @@ def start_onMousePress(app,mouseX,mouseY,button):
 
 def setup_onMousePress(app, mouseX, mouseY,button):
     if inButton(app,mouseX,mouseY,app.width//2-100, app.height//2+160, 200, 50) and app.players:
-        activate(app)
-        setActiveScreen('game')
-        game_onMouseMove(app, 0, 0)
+        if checkValid(app):
+            activate(app)
+            setActiveScreen('game')
     
     else:
         app.players = []
         for i in range(2):
             name_response = app.getTextInput(f'Enter the name for Player {i + 1}:')
             name = 'Unknown' if not name_response else name_response
-            # if name=='Unknown':
-            #     break 
+
             color = app.getTextInput(f'Enter the color for Player {i + 1} (e.g., lightgreen, lightblue):')
             color = 'Unknown' if not color else color
-            # if color=='Unknown':
-            #     break
             app.players.append({'name': name, 'color': color})
 
         app.showMessage('Player setup complete!')
 
+def checkValid(app):
+    names = {player['name'] for player in app.players}
+    if len(names) < len(app.players):
+        app.showMessage('Duplicate names detected. Please enter a different name.')
+        return False
+    return True
          
 
 def setup_redrawAll(app):
