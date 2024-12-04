@@ -844,7 +844,7 @@ def game_onMouseRelease(app, mouseX, mouseY, button):
             defendTroops= app.defendPlayer.owned[app.defendCountry]
             app.message=f'Attacking rolls {attackerDice} dice, Defending rolls {defenderDice} Dice'
 
-            app.submessage='Result  decided by comparing highest dice rolls. Defenders win ties'
+            app.submessage='Result decided by comparing highest dice rolls. Defenders win ties'
         
             
 
@@ -884,8 +884,6 @@ def game_onMousePress(app,mouseX,mouseY,button):
         elif app.activePlayer.phases[app.activePlayer.phaseIndex]=='Attack':
             app.lineStartLocation=mouseX,mouseY
             app.attackCountry=app.nearest_country
-            # if app.attackCountry==None:
-            #     app.attackCountry=app.nearest_country
         
         elif app.activePlayer.phases[app.activePlayer.phaseIndex]=='Fortification':
             app.fortStart=app.nearest_country
@@ -958,8 +956,8 @@ def game_onMousePress(app,mouseX,mouseY,button):
                         app.fortNum+=1
 
                     elif button==3:
-                            app.activePlayer.fortify(app.fortStart,app.fortEnd,app.fortNum)
-                            move_to_next_phase(app)
+                        app.activePlayer.fortify(app.fortStart,app.fortEnd,app.fortNum)
+                        move_to_next_phase(app)
 
                           
 

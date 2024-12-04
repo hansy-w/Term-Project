@@ -457,8 +457,16 @@ def inButton(app, mouseX, mouseY, rectX, rectY, width, height):
 def start_onMousePress(app,mouseX,mouseY,button):
     if app.startGame == 'black':
         setActiveScreen('setup')
-
-    
+    elif app.howTo == 'black':
+        app.showMessage("""Welcome to Risk! \n Prepare for a thrilling battle of strategy, diplomacy, and conquest! 
+                        In Risk, players compete to dominate the world by deploying armies, conquering territories, and forging alliances. 
+                        The game unfolds in three main phases: 
+                        Reinforcement, where you receive new troops based on your controlled territories; 
+                        Attack, where you launch daring offensives to conquer enemy lands; 
+                        and Fortification, where you move your forces to strengthen your defenses. 
+                        The ultimate goal is to control every territory on the board, achieving world domination. 
+                        Can you outwit your opponents and lead your armies to victory?""")
+        app.showMessage("""Press t at any time during the game to view major regions. Conquering all territories in that region will grant bonus troops to deploy!""")
 
 
 
