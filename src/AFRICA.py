@@ -945,19 +945,19 @@ def game_onMousePress(app,mouseX,mouseY,button):
                         app.message=='You may continue attacking'
                 
 
-            if app.activePlayer.phases[app.activePlayer.phaseIndex]=='Fortification':
-                if app.fortStart and app.fortEnd:
-                    app.submessage=f'{app.fortStart} will give {app.fortNum} troops to {app.fortEnd}'
-                    
-                    if button==0 and app.fortNum>0:
-                        app.fortNum-=1
-                    
-                    elif button==1 and app.activePlayer.owned[app.fortStart]>app.fortNum+1:
-                        app.fortNum+=1
+        if app.activePlayer.phases[app.activePlayer.phaseIndex]=='Fortification':
+            if app.fortStart and app.fortEnd:
+                app.submessage=f'{app.fortStart} will give {app.fortNum} troops to {app.fortEnd}'
+                
+                if button==0 and app.fortNum>0:
+                    app.fortNum-=1
+                
+                elif button==1 and app.activePlayer.owned[app.fortStart]>app.fortNum+1:
+                    app.fortNum+=1
 
-                    elif button==3:
-                        app.activePlayer.fortify(app.fortStart,app.fortEnd,app.fortNum)
-                        move_to_next_phase(app)
+                elif button==3:
+                    app.activePlayer.fortify(app.fortStart,app.fortEnd,app.fortNum)
+                    move_to_next_phase(app)
 
                           
 
