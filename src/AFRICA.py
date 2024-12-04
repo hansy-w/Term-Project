@@ -463,7 +463,7 @@ class Player:
         
 
 class Game:
-    def get_random_half_countries(country_shapes):
+    def get_random_country_groups(country_shapes):
         country_list = list(country_shapes.keys())
         random.shuffle(country_list) 
 
@@ -488,11 +488,11 @@ class Game:
     }
 
     continentBonus={
-    1:3,
-    2:3,
+    1:6,
+    2:5,
     3:3,
-    4:3,
-    5:3,
+    4:4,
+    5:2,
     6:3,
 }
     def __init__(self,app):
@@ -500,7 +500,7 @@ class Game:
 
     def start(self,app):
         
-        starting1 = set(Game.get_random_half_countries(country_shapes))
+        starting1 = set(Game.get_random_country_groups(country_shapes))
 
         starting2 = set(country_shapes.keys()).difference(starting1)
 
@@ -511,10 +511,6 @@ class Game:
 
         app.player2 = Player(starting2, players[1]['color'], name=players[1]['name'])
         
-        # app.playe{{er(starting1,'lightgreen')
-
-        # app.player2 = Player(starting2,'lightblue')
-
         
         self.players = [app.player1, app.player2]
         app.players = [app.player1, app.player2]
@@ -645,6 +641,7 @@ def game_onKeyPress(app,key):
     if key=='t':
         
         app.tView=not app.tView
+        app.message=''
 
     elif key=='space':
         move_to_next_phase(app)
