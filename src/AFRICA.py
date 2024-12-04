@@ -325,7 +325,7 @@ def blitz(attacker, defender):
 
     return attacker_losses, defender_losses
 
-def monteCarloBlitzSimulation(attacker_initial, defender_initial, simulations=10000): #Add dice/troops on screen, 
+def monteCarloBlitzSimulation(attacker_initial, defender_initial, simulations=100): #Add dice/troops on screen, 
     attacker_wins_total = 0
     defender_wins_total = 0
     
