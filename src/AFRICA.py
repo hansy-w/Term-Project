@@ -449,8 +449,7 @@ class Player:
         else:
             app.message="ATTACK FAILED"
             playSound(app,'https://www.myinstants.com/media/sounds/crowdaw.mp3')
-            app.submessage=f"""Attacker: {app.activePlayer.owned[app.attackCountry]} troops remaining,
-              Defender: {app.defendPlayer.owned[defender]} troops remaining."""
+            app.submessage=f"Attacker: {app.activePlayer.owned[app.attackCountry]} troops remaining, Defender: {app.defendPlayer.owned[defender]} troops remaining."
             
     def fortify(self,giver,receiver,num):
 
