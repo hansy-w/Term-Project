@@ -30,7 +30,9 @@ def getAfricaJsonData():
         if properties.get("adm0_a3") == "SDS":  # I HATE SOUTH SUDAN
             properties["adm0_a3"] = "SSD"
 
-        if "adm0_a3" in properties and "name" in properties and "pop_est" in properties and "subregion" in properties:
+        if ("adm0_a3" in properties and "name" in properties 
+        and "pop_est" in properties 
+        and "subregion" in properties):
             data.append({
                 "adm0_a3": properties["adm0_a3"],
                 "name": properties["name"],
@@ -41,7 +43,10 @@ def getAfricaJsonData():
     df = pd.DataFrame(data)
     exceptions = ["GRL", "ISL"]
 
-    filtered_df = df[(df["pop_est"] >= 2000000) & (df["adm0_a3"] != "SLE") & (df["adm0_a3"] != "BDI") & (df["adm0_a3"] != "LSO") & (df["adm0_a3"] != "GAM")]
+    filtered_df = df[(df["pop_est"] >= 2000000) & (df["adm0_a3"] != "SLE") 
+                   & (df["adm0_a3"] != "BDI") 
+                   & (df["adm0_a3"] != "LSO") 
+                   & (df["adm0_a3"] != "GAM")]
     filtered_df = filtered_df[filtered_df["subregion"].str.contains("Africa")]
 
 
@@ -59,7 +64,7 @@ def getAfricaJsonData():
     return filtered_world_data
 filtered_world_data=getAfricaJsonData()
 ###########################################################################################
-# Start of ChatGPT generated/supported segment ######################################################
+# Start of ChatGPT generated/supported segment ############################################
 def africa_geo_to_screen(lon, lat, width, height):
     # Africa bounding box (approximate)
     min_lon, max_lon = -20, 55    # Longitude range of Africa
@@ -93,7 +98,7 @@ def africa_geo_to_screen(lon, lat, width, height):
     return screen_x, screen_y
 
 
-# End of ChatGPT generated/supported segment ########################################################
+# End of ChatGPT generated/supported segment ##############################################
 ###########################################################################################
 
 #Generate Shapes and Helper Functions
@@ -110,7 +115,8 @@ def getCountryShapes():
 
         screenPolygon = []
         for polygon in polygons:
-            simplified_polygon = polygon.simplify(0.1) ###IMPORTANT FOR FASTER LOADING SPEED: simplify the higher float the more simple
+            simplified_polygon = polygon.simplify(0.1) 
+            ###IMPORTANT FOR FASTER LOADING SPEED: simplify the higher float the more simple
             screen_coords = [africa_geo_to_screen(x, y, 1200, 550) for x, y in simplified_polygon.exterior.coords]        
             screenPolygon.append(screen_coords)
             countryShapes[countryName] = screenPolygon
@@ -129,11 +135,6 @@ def getCountryBox(name): #Iterates through countries' polygon coordinates, finds
     namePolygon = countryShapes[name]
     leftTop = [float('inf'), float('inf')]
     rightBot = [0, 0]
-
-    left=leftTop[0]
-    top=leftTop[1]
-    right=rightBot[0]
-    bot=rightBot[1]
 
     for polygon in namePolygon:
         for x, y in polygon:
@@ -184,7 +185,6 @@ subregion_boxes_dict=getSubregionBoxDict()
 def getSubregionCountries():
     sub_countries_dict = {}
     for subregion in subregion_boxes_dict:
-        subregion_countries_dict = {}
         countries_in_subregion = filtered_world_data[filtered_world_data['subregion'] == f'{subregion}']['name'].tolist()
         sub_countries_dict.update({str(subregion):countries_in_subregion})
 
@@ -207,7 +207,6 @@ def find_nearest_country(mouse_x, mouse_y, countryShapes, app):
     click_point = Point(mouse_x, mouse_y)
 
     nearest_country = None
-    min_distance = 0
 
     if not app.countriesIn:
         return None
@@ -329,7 +328,7 @@ def blitz(attacker, defender):
 
     return attacker_losses, defender_losses
 
-def monteCarloBlitzSimulation(attacker_initial, defender_initial, simulations=30000): #Add dice/troops on screen, 
+def monteCarloBlitzSimulation(attacker_initial, defender_initial, simulations=30000): 
     attacker_wins_total = 0
     defender_wins_total = 0
     
@@ -424,7 +423,8 @@ class Player:
         bonus = sum(Game.continentBonus[continent] for continent in self.continentsOwned)
 
         total = base + bonus
-        app.message = f"{total} Reinforcements Received for {len(self.owned)} countries and {len(self.continentsOwned)} Regions"
+        app.message = f"""{total} Reinforcements Received for {len(self.owned)} countries 
+        and {len(self.continentsOwned)} Regions"""
         
         return total
     
@@ -436,7 +436,6 @@ class Player:
         if other.owned[defender]<=0:
             other.owned.pop(defender)
             self.owned[defender]=1
-            print(defender in self.owned)
             app.message="ATTACK SUCCESSFUL"
             app.submessage=f"Select Troops to fortify new country using buttons" 
 
@@ -450,7 +449,8 @@ class Player:
         else:
             app.message="ATTACK FAILED"
             playSound(app,'https://www.myinstants.com/media/sounds/crowdaw.mp3')
-            app.submessage=f"Attacker: {app.activePlayer.owned[app.attackCountry]} troops remaining, Defender: {app.defendPlayer.owned[defender]} troops remaining."
+            app.submessage=f"""Attacker: {app.activePlayer.owned[app.attackCountry]} troops remaining,
+              Defender: {app.defendPlayer.owned[defender]} troops remaining."""
             
     def fortify(self,giver,receiver,num):
 
@@ -459,18 +459,6 @@ class Player:
         if num>0:
             playSound(app,"https://www.myinstants.com/media/sounds/fire-emblem-support-get.mp3")
 
-        
-
-
-
-
-        
-        
-
-        
-
-    
-        
 
 class Game:
     def get_random_country_groups(countryShapes):
@@ -515,7 +503,6 @@ class Game:
         starting2 = set(countryShapes.keys()).difference(starting1)
 
         players=app.players
-        print(app.players)
 
         app.player1 = Player(starting1, players[0]['color'], name=players[0]['name'])
 
@@ -574,17 +561,6 @@ def activate(app):
     app.sound.pause()
     app.sound=Sound('https://terraria.wiki.gg/images/f/f3/Music-Town_Day.mp3')
     app.sound.play(loop=True)
-    
-
-
-
-    
-    
-    
-
-
-
-
 
 def drawCountries(app):
     for countryName in list(countryShapes.keys()):
@@ -630,12 +606,13 @@ def drawCountries(app):
             drawPolygon(*L,fill=color, border='Black', borderWidth=1,
                 opacity=100, rotateAngle=0, dashes=False, visible=True)
 
-            if countryName==app.nearest_country or countryName==app.reinforceCountry or countryName==app.attackCountry or countryName==app.fortStart:
+            if (countryName==app.nearest_country 
+                or countryName==app.reinforceCountry 
+                or countryName==app.attackCountry 
+                or countryName==app.fortStart):
                     drawPolygon(*L,fill='black', border=None, borderWidth=1,
                 opacity=60, rotateAngle=0, dashes=False, visible=True)
         
-        
-    
     circleCenter=[]
     if not app.tView:
         for countryName in list(countryShapes.keys()):
@@ -650,7 +627,6 @@ def drawCountries(app):
                 drawLabel(f'{app.player2.owned[countryName]}',x,y,size=18,bold=True)
 
 
-
 def game_onKeyPress(app,key):
     if key=='t':
         
@@ -662,11 +638,6 @@ def game_onKeyPress(app,key):
 
     elif key=='w':
         app.activePlayer.owned={key: 1 for key in countryShapes}
-
-        # while len(app.activePlayer.owned)!=1:
-        #     removed_country=app.activePlayer.owned.popitem()
-        #     if removed_country in countryShapes:
-        #         app.players[1].owned[removed_country]=99
     
     elif key=='r':
         app.background='lightCyan'
@@ -691,10 +662,6 @@ def game_onKeyPress(app,key):
         app.name=None
         app.players=[]
         setActiveScreen('setup')
-        
-
-    
-
 
 def move_to_next_phase(app):
     app.message=""
@@ -749,8 +716,6 @@ def move_to_next_phase(app):
 
 
 def pathSolver(startCountry, endCountry, playerOwned, visited=None):
-    print('pathSolver is Running~!!!')
-
     if visited is None:
         visited = set()
 
@@ -765,11 +730,9 @@ def pathSolver(startCountry, endCountry, playerOwned, visited=None):
     # Iterate through countries
     for neighbor in country_neighbors.get(countryName_to_code[startCountry], []):
         
-        print(countryCode_to_name)
         if neighbor not in countryCode_to_name:
             continue
         neighbor=countryCode_to_name[neighbor]
-        print(f'pathSolver is Running~!!!   {neighbor}')
         # ifLegal: Only consider neighbors owned by the same player and not yet visited
         if neighbor in playerOwned and neighbor not in visited:
             
@@ -794,7 +757,6 @@ def pathFinder(app,startCountry, endCountry):
             coordPath=[]
             for country in countryPath:
                 coordPath.append(getCenter(countryShapes[country]))
-            print(f"pathFinder: {coordPath}")
             app.message="Fortification Path Found!"
             app.submessage=''
             
@@ -818,13 +780,8 @@ def game_onMouseDrag(app, mouseX, mouseY, button):
             app.fortPath = pathFinder(app,app.fortStart,app.fortEnd)
             
             if app.fortStart and app.fortEnd:
-                app.submessage=f'{app.fortStart} will give {app.fortNum} troops to {app.fortEnd}'
-
-            print(app.fortStart,app.fortEnd)
-            print(f"onMouseDrag: {app.fortPath}")
-            
+                app.submessage=f'{app.fortStart} will give {app.fortNum} troops to {app.fortEnd}'            
     
-            
         
         
 def game_onMouseRelease(app, mouseX, mouseY, button):
@@ -846,7 +803,9 @@ def game_onMouseRelease(app, mouseX, mouseY, button):
                 if app.defendCountry in player.owned:
                     app.defendPlayer=player
             
-        if app.attackCountry in app.activePlayer.owned and app.defendCountry not in app.activePlayer.owned:
+        if (app.attackCountry in app.activePlayer.owned 
+            and app.defendCountry not in app.activePlayer.owned 
+            and app.activePlayer.owned[app.attackCountry]>1):
             app.probability=monteCarloBlitzSimulation(app.activePlayer.owned[app.attackCountry],app.defendPlayer.owned[app.defendCountry])
             attackTroops= app.activePlayer.owned[app.attackCountry]
             defendTroops= app.defendPlayer.owned[app.defendCountry]
@@ -864,7 +823,7 @@ def game_onMouseRelease(app, mouseX, mouseY, button):
         else:
             app.probability='N/A'
             app.message='not valid attack'
-            app.submessage=''
+            app.submessage='you must attack from a country with more than 1 troop'
         
     elif app.activePlayer.phases[app.activePlayer.phaseIndex]=='Reinforcement':
         app.fortEnd=find_nearest_country(mouseX, mouseY, countryShapes, app)
@@ -879,6 +838,7 @@ def game_onMousePress(app,mouseX,mouseY,button):
                             app.message=f"{app.activePlayer} WINS"
                             app.submessage='Press R to Restart'
                             playSound(app,'https://www.myinstants.com/media/sounds/final-fantasy-vii-victory-fanfare-1.mp3')
+                            return 
     app.nearest_country = find_nearest_country(mouseX, mouseY, countryShapes, app)
     
     if mouseY<app.UIy:
@@ -1036,7 +996,6 @@ def pickButton(app, mouseX, mouseY):
         buttonRight = buttonLeft + buttonWidth
 
         if buttonLeft <= mouseX <= buttonRight:
-            print(i)
             return i
 
     return None
