@@ -4,7 +4,6 @@
 from cmu_graphics import *
 import geopandas as gpd
 from shapely.geometry import MultiPolygon, GeometryCollection
-from shapely.ops import transform
 from shapely.geometry import Point
 from shapely.geometry import Polygon
 import pandas as pd
@@ -199,11 +198,6 @@ def getCountryBox(name): #Iterates through countries' polygon coordinates, finds
     name_polygons = country_shapes[name]
     leftTop = [float('inf'), float('inf')]
     rightBot = [0, 0]
-
-    left=leftTop[0]
-    top=leftTop[1]
-    right=rightBot[0]
-    bot=rightBot[1]
 
     for polygon in name_polygons:
         for x, y in polygon:

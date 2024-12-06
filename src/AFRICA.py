@@ -17,7 +17,7 @@ from PIL import Image
 # Json File Reading
 #geojson-maps.json and datahub.geojson are from
 #  https://geojson-maps.kyd.au/ and https://datahub.io/core/geo-countries#description respectively
-
+#All sound files belong to their respective owners
 
 def getAfricaJsonData():
     with open('./src/geojson-maps.json', 'r') as f:
@@ -965,6 +965,8 @@ def game_redrawAll(app):
         drawLabel(f"{app.activePlayer.name}'s Turn!", 600, app.bannerY+75, size=40, bold=True, fill='gold', border='black',opacity=app.bannerOpacity)
     
 def game_onStep(app):
+    app.activePlayer.continentsOwned=app.activePlayer.get_continents_owned(Game.territories)
+    print(app.activePlayer.continentsOwned)
     if app.bannerAnimation:
         app.bannerY -= 3  
         app.bannerOpacity -= 5  
@@ -1013,9 +1015,6 @@ def drawUI(app):
         gap+=150
     
     drawLabel(f"Country: {app.nearest_country}",900,600,size=25)
-    # drawLabel(f"Population: {app.population}",650,625,size=25)
-    # drawLabel(f"Neighbor(s): {app.neighbors}",650,650,size=25)
-    # drawLabel(f"In Countries: {app.countriesIn}",650,675,size=25)
     for player in app.activeGame.players:
                 if app.nearest_country in player.owned:
                     owner=player
@@ -1026,9 +1025,7 @@ def drawUI(app):
     
 
 def CMU_imaging(file_path):
-    image=Image.open(file_path)
-    imageWidth, imageHeight = image.size
-    
+    image=Image.open(file_path)    
     return CMUImage(image)
 
 def drawPlayers(app):
