@@ -477,11 +477,14 @@ def setup_onMousePress(app, mouseX, mouseY,button):
             setActiveScreen('game')
     
     elif distance(app.width//2, app.height//2-220, mouseX, mouseY) <= app.r and app.players:
-        ang1 = rounded(angleTo(app.width//2, app.height//2, mouseX, mouseY))
+        angle=rounded(angleTo(app.width//2, app.height//2-220, mouseX, mouseY))+90
+        angle=angle%360
+        print(angle)
+        print(gradient_color(angle,360))
         if app.changeOne==True:
-            app.players[0]['color']=gradient_color(ang1,360)
+            app.players[0]['color']=gradient_color(angle,360)
         elif app.changeTwo==True:
-            app.players[1]['color']=gradient_color(ang1,360)
+            app.players[1]['color']=gradient_color(angle,360)
 
     else:
         app.players = []

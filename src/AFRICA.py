@@ -961,12 +961,11 @@ def game_redrawAll(app):
         drawFortify(app)
     
     if app.showTurnBanner:
-        drawRect(0, app.bannerY, 1200, 150, fill=gradient(f'{app.activePlayer.color}', 'white', f'{app.activePlayer.color}', start='bottom'))
+        drawRect(0, app.bannerY, 1200, 150, fill=gradient(app.activePlayer.color, 'white', app.activePlayer.color, start='bottom'))
         drawLabel(f"{app.activePlayer.name}'s Turn!", 600, app.bannerY+75, size=40, bold=True, fill='gold', border='black',opacity=app.bannerOpacity)
     
 def game_onStep(app):
     app.activePlayer.continentsOwned=app.activePlayer.get_continents_owned(Game.territories)
-    print(app.activePlayer.continentsOwned)
     if app.bannerAnimation:
         app.bannerY -= 3  
         app.bannerOpacity -= 5  
