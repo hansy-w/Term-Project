@@ -476,7 +476,7 @@ def setup_onMousePress(app, mouseX, mouseY,button):
             activate(app)
             setActiveScreen('game')
     
-    elif distance(app.width//2, app.height//2-220, mouseX, mouseY) <= app.r:
+    elif distance(app.width//2, app.height//2-220, mouseX, mouseY) <= app.r and app.players:
         ang1 = rounded(angleTo(app.width//2, app.height//2, mouseX, mouseY))
         if app.changeOne==True:
             app.players[0]['color']=gradient_color(ang1,360)
@@ -512,29 +512,26 @@ def setup_onKeyPress(app,key):
 
 def checkValid(app):
     names = {player['name'] for player in app.players}
-    if len(names) < len(app.players) or "Unknown" in names:
+    if len(names) < len(app.players):
         app.showMessage('Invalid names detected. Please enter a different name.')
         return False
     
     return True
 
-def draw_color_wheel(cx, cy, radius,app):
-    # Number of wedges in the color wheel
-    num_wedges = 360
+def drawColorWheel(cx, cy, radius,app):
+    arcs = 360
     radius=app.r
-    for i in range(num_wedges):
-        # Calculate the start angle and sweep angle for the arc
-        start_angle = i
-        sweep_angle = 1
+    for i in range(arcs):
+        startAngle = i
+        sweepAngle = 1
 
-        # Calculate the color based on the angle
-        color = gradient_color(i, num_wedges)
+        color = gradient_color(i, arcs)
 
-        # Draw the wedge using drawArc
-        drawArc(cx, cy, 2 * radius, 2 * radius, 
-                start_angle, sweep_angle, 
+        drawArc(cx, cy, 2 *radius, 2 *radius, 
+                startAngle, sweepAngle, 
                 fill=color, border=None)
 
+#gradient_color was created by ChatGPT
 def gradient_color(angle, max_angle):
     # Normalize the angle to [0, 1]
     normalized = angle / max_angle
@@ -548,9 +545,17 @@ def distance(x0, y0, x1, y1):
     return ((x1 - x0)**2 + (y1 - y0)**2)**0.5
     
 def setup_redrawAll(app):
-    draw_color_wheel(app.width // 2, app.height // 2-220, app.r,app)
-    drawLabel('Click in empty space to set up players, then start game!',
+    drawColorWheel(app.width // 2, app.height // 2-220, app.r,app)
+    if app.changeOne==False and app.changeTwo==False:
+        drawLabel('Click in empty space to set up players, then start game! Press 1 to change P1 Color, Press 2 to change P2 Color!',
+              app.width / 2, app.height / 2 - 50, size=20, bold=False)
+    elif app.changeOne==True:
+        drawLabel('Changing P1 Color... Press enter to submit changes!',
               app.width / 2, app.height / 2 - 50, size=24, bold=True)
+    elif app.changeTwo==True:
+        drawLabel('Changing P2 Color... Press enter to submit changes!',
+              app.width / 2, app.height / 2 - 50, size=24, bold=True)
+
     if app.players:
         for i, player in enumerate(app.players):
             drawLabel(f'Player {i + 1}: {player["name"]}, Color: {player["color"]}',
