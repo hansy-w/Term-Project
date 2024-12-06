@@ -11,7 +11,7 @@ import json
 import numpy as np
 from PIL import Image
 from AFRICA import *
-#All sound files belong to their respective owners
+#All sound files belong to their respective owners, accessible by the url
 ###########################################################################################
 # Json File Reading
 def getJsonData():
