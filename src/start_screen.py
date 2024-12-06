@@ -321,6 +321,8 @@ def withinCountryinSub(app, mouseX, mouseY):
 #Actual App Functions for MVC
 
 def onAppStart(app):
+    app.changeOne=False
+    app.changeTwo=False
 
     playSound(app,'https://archive.org/download/WiiSportsTheme/Wii%20Sports%20Theme.mp3')
     app.background='lightCyan'
@@ -345,6 +347,7 @@ def onAppStart(app):
     app.name=None
     app.players=[]
     app.valid=False
+    app.r=150
     
 
     
@@ -467,22 +470,45 @@ def start_onMousePress(app,mouseX,mouseY,button):
 
 
 def setup_onMousePress(app, mouseX, mouseY,button):
+
     if inButton(app,mouseX,mouseY,app.width//2-100, app.height//2+160, 200, 50) and app.players:
         if checkValid(app):
             activate(app)
             setActiveScreen('game')
     
+    elif distance(app.width//2, app.height//2-220, mouseX, mouseY) <= app.r:
+        ang1 = rounded(angleTo(app.width//2, app.height//2, mouseX, mouseY))
+        if app.changeOne==True:
+            app.players[0]['color']=gradient_color(ang1,360)
+        elif app.changeTwo==True:
+            app.players[1]['color']=gradient_color(ang1,360)
+
     else:
         app.players = []
+        colorIndex=0
         for i in range(2):
             name_response = app.getTextInput(f'Enter the name for Player {i + 1}:')
             name = 'Unknown' if not name_response else name_response
 
-            color = app.getTextInput(f'Enter the color for Player {i + 1} (e.g., lightgreen, lightblue):')
-            color = 'Unknown' if not color else color
+            colorList=['lightgreen','lightblue']
+            color = colorList[colorIndex]
+            colorIndex+=1
             app.players.append({'name': name, 'color': color})
 
         app.showMessage('Player setup complete!')
+
+def setup_onKeyPress(app,key):
+    if key=='enter':
+        app.changeOne=False
+        app.changeTwo=False
+
+    elif key=='1':
+        app.changeOne=True
+        app.changeTwo=False
+
+    elif key=='2':
+        app.changeOne=False
+        app.changeTwo=True
 
 def checkValid(app):
     names = {player['name'] for player in app.players}
@@ -491,9 +517,38 @@ def checkValid(app):
         return False
     
     return True
-         
 
+def draw_color_wheel(cx, cy, radius,app):
+    # Number of wedges in the color wheel
+    num_wedges = 360
+    radius=app.r
+    for i in range(num_wedges):
+        # Calculate the start angle and sweep angle for the arc
+        start_angle = i
+        sweep_angle = 1
+
+        # Calculate the color based on the angle
+        color = gradient_color(i, num_wedges)
+
+        # Draw the wedge using drawArc
+        drawArc(cx, cy, 2 * radius, 2 * radius, 
+                start_angle, sweep_angle, 
+                fill=color, border=None)
+
+def gradient_color(angle, max_angle):
+    # Normalize the angle to [0, 1]
+    normalized = angle / max_angle
+    # Calculate the RGB values based on the normalized angle
+    red = int(255 * max(0, min(1, abs(normalized * 6 - 3) - 1)))
+    green = int(255 * max(0, min(1, 2 - abs(normalized * 6 - 2))))
+    blue = int(255 * max(0, min(1, 2 - abs(normalized * 6 - 4))))
+    return rgb(red, green, blue)
+
+def distance(x0, y0, x1, y1):
+    return ((x1 - x0)**2 + (y1 - y0)**2)**0.5
+    
 def setup_redrawAll(app):
+    draw_color_wheel(app.width // 2, app.height // 2-220, app.r,app)
     drawLabel('Click in empty space to set up players, then start game!',
               app.width / 2, app.height / 2 - 50, size=24, bold=True)
     if app.players:

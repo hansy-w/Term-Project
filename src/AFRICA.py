@@ -1010,7 +1010,7 @@ def drawUI(app):
 
     gap=50
     for i in range(4):
-        drawRect(gap,600,100,100,fill=f'{app.activePlayer.color}',border='black')
+        drawRect(gap,600,100,100,fill=app.activePlayer.color,border='black')
         drawLabel(getButtonName(i),gap+50,650,size=70 if i<2 else 20)
         gap+=150
     
