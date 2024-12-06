@@ -96,8 +96,6 @@ def africa_geo_to_screen(lon, lat, width, height):
     screen_x = int((mercator_x - min_mercator_x) * scale)
     screen_y = int((max_mercator_y - mercator_y) * scale)
     return screen_x, screen_y
-
-
 # End of ChatGPT generated/supported segment ##############################################
 ###########################################################################################
 
@@ -449,7 +447,7 @@ class Player:
         else:
             app.message="ATTACK FAILED"
             playSound(app,'https://www.myinstants.com/media/sounds/crowdaw.mp3')
-            app.submessage=f"Attacker: {app.activePlayer.owned[app.attackCountry]} troops remaining, Defender: {app.defendPlayer.owned[defender]} troops remaining."
+            app.submessage=(f"Attacker: {app.activePlayer.owned[app.attackCountry]} troops remaining, Defender: {app.defendPlayer.owned[defender]} troops remaining.")
             
     def fortify(self,giver,receiver,num):
 
@@ -467,6 +465,7 @@ class Game:
         half_count = len(country_list) // 2  
         return country_list[:half_count]
     
+#Territories were initially assigned using ChatGPT, then balanced by myself
     territories={1: {'EGY', 'LBY', 'TUN', 'DZA', 'MAR', 'SDN','NER','TCD'},  # North Africa
     2: {'CIV', 'BEN', 'TGO', 'GHA', 'SEN', 'NGA', 'MLI', 'BFA', 'MRT','GIN','LBR'},  # West Africa
     3: {'CAM', 'CAF', 'COD','GAB', 'COG','CMR'},  # Central Africa
@@ -502,6 +501,9 @@ class Game:
         starting2 = set(countryShapes.keys()).difference(starting1)
 
         players=app.players
+
+        
+
 
         app.player1 = Player(starting1, players[0]['color'], name=players[0]['name'])
 
@@ -586,8 +588,6 @@ def drawCountries(app):
                 else:
                     color = "lightGray"  # Default color if no region is found
                         
-
-
             else:       
                 if (countryName_to_code[countryName] in app.neighbors 
                       and app.nearest_country in app.activePlayer.owned 
@@ -660,6 +660,7 @@ def game_onKeyPress(app,key):
 
         app.name=None
         app.players=[]
+        app.sound.pause()
         setActiveScreen('setup')
 
 def move_to_next_phase(app):
@@ -1134,4 +1135,4 @@ def playSound(app,url):
     app.sound=Sound(url)
     app.sound.play(restart=False)
 
-app.setMaxShapeCount(10000)
+app.setMaxShapeCount(10000)                                                                                                                                                                                                   

@@ -327,6 +327,7 @@ def withinCountryinSub(app, mouseX, mouseY):
 #Actual App Functions for MVC
 
 def onAppStart(app):
+
     playSound(app,'https://archive.org/download/WiiSportsTheme/Wii%20Sports%20Theme.mp3')
     app.background='lightCyan'
     app.width = 1200
@@ -380,19 +381,19 @@ def drawCountry(name):
              opacity=100, rotateAngle=0, dashes=False, visible=True)
     
 def drawCountries(app):
-    for territory_id, country_list in territories.items():
+    for territoryId, countryList in territories.items():
         # get region color
         region = None
-        for reg_name, reg_territories in territory_regions.items():
-            if territory_id in reg_territories:
-                region = reg_name
+        for regionName, regionTerritories in territory_regions.items():
+            if territoryId in regionTerritories:
+                region = regionName
                 break
 
         base_color = region_colors.get(region, "lightGray")
         
         # adjust brightness 
-        gradient_factor_step = 0.8 / len(country_list)
-        for i, country_name in enumerate(country_list):
+        gradient_factor_step = 0.8 / len(countryList)
+        for i, country_name in enumerate(countryList):
             if country_name not in country_shapes:
                 continue
             
@@ -515,6 +516,6 @@ app.setMaxShapeCount(4000)
 def main():
     
 
-    runAppWithScreens(initialScreen="start")
+    runAppWithScreens(initialScreen="start",width=1200,height=800)
 
 main()
